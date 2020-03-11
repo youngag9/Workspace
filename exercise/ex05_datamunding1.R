@@ -105,6 +105,7 @@ df_exam %>% arrange(class, desc(math))
 
 str(df_mpg_audi)
 
+# top3 뽑기
 df_mpg %>%  filter(manufacturer =="audi") %>% 
   arrange(desc(hwy)) %>% 
   head(3)

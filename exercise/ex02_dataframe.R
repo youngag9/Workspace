@@ -81,3 +81,35 @@ View(tb_midterm)
 VieW(head(tb_midterm, 100))
 
 
+
+# dataframe 접근 
+# 1. indexing
+# , 가 없으면 변수 지정하는 것!
+df_exam[1]  # 특정 변수 지정: R에서는, 인덱스가 1부터 시작
+df_exam[1,]  # 첫번째 행
+df_exam[, 1]
+df_exam['class']
+df_exam[c('id', 'class')]
+df_exam[c(1,2)]
+
+df_exam <- read.csv("Data/csv_exam.csv")
+df_exam[c(3,8,15), "math"] <- NA
+
+
+# 2. slicing?? no. 벡터생성!
+df_exam[1:3]  # 1~3변수 출력. 끝번호도 출력
+# df_exam[1:10:2]  # Alert. by지정X slicing이 아니기 때문!
+
+
+# 3. 행선택
+# in pandas: df_exam.loc[] / df_exam.iloc[] --> df의 속성
+# in R     : df_exam[행, 변수] --> 둘 중 하나 비우면 all행 or all변수
+
+df_exam[1,] # 첫번째 행과 모든 변수
+df_exam[1:3, ] # 1~3행과 모든 변수
+df_exam[1, 1]  # 첫번째 행의 첫 변수 값. --> 하나의 셀만 선택한 것.
+df_exam[1:3, 1:3]
+df_exam[c(1,2,3), c(1,2,3)]
+
+df_exam[]  # 모든행과 열
+

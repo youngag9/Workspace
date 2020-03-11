@@ -24,6 +24,7 @@
 
 # 1. 데이터분석 준비 - 패키지 준비
 
+# foreign: spss 등 파일다루는, S언어를 기반으로 하는 패키지
 install.packages("foreign", dependencies = T)
 library(foreign)
 library(dplyr)
@@ -104,7 +105,7 @@ df_welfare <- rename(df_welfare,
 #          code_job = h10_eco9,     # 직종 코드
 #          code_region = h10_reg7)  # 지역 코드
 
-# 변수생성됐는지 확인
+# 변수이름 변경됐는지 확인
 head(df_welfare)
 str(df_welfare[c("sex", "birth", "marriage", "religion", "income", "code_job", "code_region")])
 # df_welfare$b   # 이런식으로 이름의 변수 있는지 확인
@@ -157,7 +158,7 @@ df_welfare$sex <- ifelse(df_welfare$sex == 9, # 코드북에 지정
                          df_welfare$sex)
 table(df_welfare$sex)
 
-# 
+# 1이면 male로, 2면 female로 변경
 df_welfare$sex <- ifelse(df_welfare$sex == 1,
                          'male',
                          'female')
@@ -193,7 +194,7 @@ qplot(df_welfare$income) + # ggplot2 패키지는 +로 어서 사용.
 # 이상치확인
 summary(df_welfare$income) # 결측치외에는, 이상치 확인이 어려움
 # 코드표를 확인하면, 임금이 0일 수없다고 하며,
-# 월급을 밝히지 않은 사람들은 9999룰 쥼 --> 이상치
+# 월급을 밝히지 않은 사람들은 9999를 줌 → 이상치
 
 # 이상치 결측처리
 df_welfare$income <- ifelse(df_welfare$income %in% c(0,9999),

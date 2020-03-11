@@ -11,7 +11,8 @@ install.packages("rJava", dependencies = T) # ubuntu에 자바 설치 후
 # sudo sync 후 sudo reboot
 # sudo -i R
 # install.packages(“rJava”)
-
+library(rJava)
+# sudo apt-get install libxtst6?
 install.packages("memoise", dependencies = T)
 install.packages("KoNLP", dependencies = T) # natural language Processing 자연어
 install.packages("devtools", dependencies = T)
@@ -23,7 +24,10 @@ library(KoNLP)
 library(dplyr)
 
 # 설치 위치 바궜으면,  setenv 실행
-Sys.setenv(JAVA_HOME="C:/Program Files/Java/jre1.8.0_231")
+# $ which java
+Sys.setenv(JAVA_HOME="/usr/bin/java")
+Sys.setenv(JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64")
+Sys.getenv("JAVA_HOME")
 
 # 사전설정 : github에서 받아줌 --> Yes입력력
 useNIADic()
@@ -69,6 +73,7 @@ top20 <- df_word %>%
 
 View(top20)
 
+install.packages("RColorBrewer", dependencies = T)
 install.packages("wordcloud")
 library(wordcloud) 
 # library(RColorBrewer) # wordcloud로딩 시, 쟈동으로 library 해줌
@@ -95,7 +100,7 @@ library(KoNLP)
 library(dplyr)
 
 # 사전설정 : github에서 받아줌 --> Yes입력력
-useNIADic()
+useNIADic()  # konlp의 NIA 사전. 사전 가져옴
 statDic() # 단어로 나옴
 
 # 데이터  준비
@@ -118,8 +123,8 @@ View(table(kwordcount))
 df_word2 <-as.data.frame(kwordcount, stringsAsFactors = F)
 # dpltr은 df에 특화되므로 변경함
 df_word2 <-rename(df_word2,
-                 word = Var1,
-                 freq = Freq)
+                  word = Var1,
+                  freq = Freq)
 
 # 두 글자 이상 단어 추출 / nchar: 문자 수를 세줌
 df_word2 <- filter(df_word2, (nchar(word) >= 2) & word != c('2020', '오후', '안영', '김수빈', '유찬희', '아름', "오전") )# 두 문자만 남겨놓음
