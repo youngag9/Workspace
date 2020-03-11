@@ -1,0 +1,158 @@
+---
+title: "Regression Analysis 1"
+output: html_document
+---
+
+### Ordinary Least Squares Regression ( OLS Regression)
+
+---
+
+0. Used data set
+- women{datasets}
+```{r code0, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+str(women)
+women
+```
+
+---
+
+1. Simple linear regression
+- $\hat{weight} = -87.52 + 3.45*height$
+```{r code8.1, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit <- lm(formula = weight ~ height, data = women) )
+summary(fit)
+
+women$weight
+
+fitted(fit)
+
+residuals(fit)
+
+plot(x = women$height, y = women$weight, xlab = 'Height (inches)', ylab = 'Weight (lbs)')
+abline(fit)
+
+```
+
+---
+
+2. Polynomial regression
+- $\hat{weight} = 261.87818 - 7.34832 * height + 0.08306 * height^{2}$
+```{r code8.2, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit2 <- lm(formula = weight ~ height + I(height^2), data = women) )
+summary(fit2)
+
+with(data = women, expr = {
+  plot(x = height, y = weight, xlab = 'Height (inches)', ylab = 'Weight (lbs)')
+  lines(x = height, y = fitted(fit2))
+})
+```
+
+---
+
+```{r code8.2.1, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit3 <- lm(formula = weight ~ height + I(height^2) + I(height^3), data = women) )
+summary(fit3)
+
+
+library(car)
+scatterplot(
+  weight ~ height, 
+  data = women, 
+  spread = FALSE, 
+  smoother.args = list(lty=2), 
+  pch = 19,
+  main = 'Women Age 30 ~ 39',
+  xlab = 'Height (inches)',
+  ylab = 'Weight (lbs)' 
+)
+
+```
+
+---
+
+3. Used data set
+- state.x77{datasets}
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+class(state.x77)
+dim(state.x77)
+
+library(DT)
+( datatable(state.x77) )
+
+states <- as.data.frame(state.x77[, c('Murder','Population','Illiteracy','Income','Frost')])
+
+library(dplyr)
+sample_n(tbl = states, size = 10, replace = FALSE)
+```
+
+---
+
+4. Correlation analysis between two variables in states data frame
+```{r code8.3, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+cor( states )
+
+library(car)
+scatterplotMatrix(
+  x = states,
+  spread = FALSE,
+  smoother.args = list(lty = 2),
+  main = 'Scatter Plot Matrix'
+)
+
+```
+
+---
+
+5. Multiple linear regression
+```{r code8.4, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit <- lm(formula = Murder ~ Population + Illiteracy + Income + Frost, data = states) )
+summary(fit)
+```
+
+---
+
+6. Multiple linear regression with significant interaction between indepedent variables
+
+- Used dataset : mtcars{datasets}
+```{r code8.4.1, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+class(mtcars)
+dim(mtcars)
+
+library(DT)
+( datatable(mtcars) )
+```
+
+---
+
+- Regression model : $\hat{mpg} = 49.81 - 0.12*hp - 8.22*wt + 0.03*hp*wt$
+```{r code8.4.2, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+#( fit <- lm(formula = mpg ~ hp + wt + hp:wt, data = mtcars) )
+( fit <- lm(formula = mpg ~ hp + wt + wt:hp, data = mtcars) )
+summary(fit)
+```
+
+---
+
+- Interaction Plot of hp*wt
+```{r code8.4.3, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(effects)
+#( eft <- effect('hp:wt', fit,, list(wt = c(2,2, 3.2, 4.2))) )
+( eft <- effect('hp:wt', fit,, list(hp = c(123.0, 146.7, 180))) )
+
+class(eft)
+str(eft)
+
+plot(x = eft, multiline = TRUE)
+```
+
+---
+

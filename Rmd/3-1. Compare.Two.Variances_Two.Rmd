@@ -1,0 +1,142 @@
+---
+title: "Compare Two Variances - F-test"
+author: "YOSEPH"
+date: "2018년 11월 28일"
+output: html_document
+---
+
+### 1. **F-Test**
+
+#### (1) Goal
+To be used to assess **whether the variances of two populations (A and B) are equal**.
+		
+#### (2) When to use ?
+To compare two variances is useful in several cases, including:
+
+- When you want to perform a **two samples t-test** to check the equality of the variances of the two samples
+- When you want to compare the variability of a new measurement method to an old one.  
+Does the new method reduce the variability of the measure?
+
+
+### 2. **Research questions** and **statistical hypotheses**
+
+#### (1) Typical research questions are:
+a. whether the variance of group A (σ^2^~A~) is **equal** to the variance of group B (σ^2^~B~)?
+b. whether the variance of group A (σ^2^~A~) is **less** than the variance of group B (σ^2^~B~)?
+c. whether the variance of group A (σ^2^~A~) is **greather** than the variance of group B (σ^2^~B~)?
+
+#### (2) In statistics, we can define the corresponding **null hypothesis (H~0~)** as follow:
+a. H~0~ : σ^2^~A~ = σ^2^~B~ (**two-tailed** test)
+b. H~0~ : σ^2^~A~ > σ^2^~B~ (**one-tailed** test)
+c. H~0~ : σ^2^~A~ < σ^2^~B~ (**one-tailed** test)
+  
+#### (3) the corresponding **alternative hypotheses (H~a~)** are as follow:
+a. H~a~ : σ^2^~A~ ≠ σ^2^~B~ (**different**)
+b. H~a~ : σ^2^~A~ ≤ σ^2^~B~ (**greater**)
+c. H~a~ : σ^2^~A~ ≥ σ^2^~B~ (**less**)
+
+
+### 3. **Formula** of `F-test`  
+
+The test statistic can be obtained by computing the ratio of the **two variances**, S^2^~A~ and S^2^~B~:
+
+> F = S^2^~A~ / S^2^~B~
+
+The **degrees of freedom** are n~A~−1 (for the numerator) and n~B~−1 (for the denominator).
+
+- **Note 1** : that the **more** this ratio **deviates from 1**, the **stronger** the evidence for **unequal** population variances.
+- **Note 2** : that the F-test requires the **two samples** to be **normally distributed**.
+
+
+### 4. Compute `F-test`
+
+	* R function
+		  `var.test()` can be used to compare **two variances** as follow:
+
+	* Two Methods
+
+		  * Method 1 : `var.test(values ~ groups, data, alternative = "two.sided")`
+		  * Method 2 : `var.test(x, y, alternative = "two.sided")`
+
+		    x,y : numeric vectors
+		    
+		    alternative: the alternative hypothesis. 
+					           allowed value is one of “two.sided” (**default**), “greater” or “less”.
+<p/>
+
+### 5. Import and check your data
+
+	* Here, we’ll use the built-in R data set named ToothGrowth:
+		
+```{r code1, message=FALSE, warning=FALSE, include=TRUE, echo=TRUE}
+
+# Store the data in the variable my_data
+data(ToothGrowth)
+
+my_data <- ToothGrowth
+```
+
+	* To have an idea of what the data look like, we start by displaying a random sample of 10 rows using the function sample_n{dplyr} :
+
+```{r code2, message=FALSE, warning=FALSE, include=TRUE, echo=TRUE}
+
+require(dplyr)
+
+sample_n(my_data, 10)
+```
+
+	* We want to test the equality of variances between the two groups OJ and VC in the column “supp”
+<p/>
+
+### 6. Preliminary test to check `F-test` assumptions
+	
+	* `F-test` is very sensitive to departure from the normal assumption.
+		  You need to check whether the data is normally distributed 
+		  before using the `F-test`
+
+	* `Shapiro-Wilk` test can be used to test whether the normal assumption holds. 
+		  It’s also possible to use `Q-Q plot` (quantile-quantile plot) to graphically 
+		  evaluate the normality of a variable.
+
+		  `Q-Q plot` draws the correlation between a given sample and the normal distribution
+
+	* If there is doubt about normality, the better choice is to use `Levene’s test` or `Fligner-Killeen test`, 
+	  which are less sensitive to departure from normal assumption
+<p/>
+
+### 7. Compute `F-test`  
+
+```{r code3, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+
+# F-test
+( res.ftest <- var.test(len ~ supp, data = my_data) )
+```
+<p/>
+
+### 8. Interpretation of the result
+
+	The p-value of `F-test` is p = 0.2331433 which is greater than the significance level 0.05. 
+	In conclusion, there is no significant difference between the two variances.
+<p/>
+
+### 9. Access to the values returned by `var.test()` function
+
+	The function `var.test()` returns a list containing the following components:
+
+	  - statistic : the value of the F test statistic
+	  - parameter : the degrees of the freedom of the F distribution of the test statistic
+	  - p.value 	: the p-value of the test
+	  - conf.int 	: a confidence interval for the ratio of the population variances
+	  - estimate 	: the ratio of the sample variances
+<p/>
+
+	The format of the R code to use for getting these values is as follow:
+	
+```{r code4, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+
+# ratio of variances
+res.ftest$estimate
+
+# p-value of the test
+res.ftest$p.value
+```

@@ -1,0 +1,140 @@
+---
+title: "6-10. Kruskal-Wallis Test ( non-parametric )"
+output: html_document
+---
+
+(@) ###What is **Kruskal-Wallis test** ?
+
+#
+      Kruskal-Wallis test by rank is a non-parametric alternative to one-way ANOVA test, 
+      which extends the two-samples Wilcoxon test in the situation where there are more than two groups. 
+      It’s recommended when the assumptions of one-way ANOVA test are not met.
+
+<!-- ![](images/kruskal-wallis-test.png){width=400px} -->
+
+
+(@) ###Visualize your data and compute **Kruskal-Wallis test**
+
++ ####Import your data into R
+
+Here, we’ll use the built-in R data set named `PlantGrowth{datasets}`. 
+It contains the **weight** of plants obtained under a **control** and **two different treatment conditions**.
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+  my_data <- PlantGrowth
+```
+
+
++ ####Check your data
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+  # print the head of the file
+  head(my_data)
+```
+
+#
+      In R terminology, the column “group” is called factor and the different categories (“ctr”, “trt1”, “trt2”) 
+      are named factor levels. 
+      
+      The levels are ordered alphabetically.
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+  # Show the group levels
+  levels(my_data$group)
+```
+
+If the levels are **not automatically** in the **correct** order, **re-order** them as follow :
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+  my_data$group <- ordered(my_data$group, levels = c("ctrl", "trt1", "trt2"))
+```
+
+#
+      It is possible to compute summary statistics by groups.
+      The {dplyr} package can be used.
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+  library(dplyr, quietly = TRUE)
+
+  group_by(my_data, group) %>%
+      summarise(
+          count  = n(),
+          mean   = mean(weight, na.rm = TRUE),
+          sd     = sd(weight, na.rm = TRUE),
+          median = median(weight, na.rm = TRUE),
+          IQR    = IQR(weight, na.rm = TRUE)
+      )
+```
+
+
++ ####Visualize the data using **box plots**
+
+Visualize your data with **{ggpubr}** :
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+  # Box plots
+  # ++++++++++++++++++++
+
+  # Plot weight by group and color by group
+  library("ggpubr", quietly = TRUE)
+
+  ggboxplot(my_data, 
+            x = "group", 
+            y = "weight", 
+            color = "group", 
+            palette = c("#00AFBB", "#E7B800", "#FC4E07"),
+            order = c("ctrl", "trt1", "trt2"),
+            ylab = "Weight", 
+            xlab = "Treatment"
+        )
+  
+  # Mean plots
+  # ++++++++++++++++++++
+  # Plot weight by group
+  # Add error bars: mean_se
+  # (other values include: mean_sd, mean_ci, median_iqr, ....)
+  library("ggpubr", quietly = TRUE)
+  
+  ggline(my_data, 
+         x = "group", 
+         y = "weight", 
+         add = c("mean_se", "jitter"), 
+         order = c("ctrl", "trt1", "trt2"),
+         ylab = "Weight", 
+         xlab = "Treatment")
+```
+
+
++ ####Compute **Kruskal-Wallis test**
+
+#
+      We want to know if there is any significant difference between the average weights of plants 
+      in the 3 experimental conditions.
+
+The test can be performed using the function `kruskal.test{stats}` as follow :
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+  kruskal.test(weight ~ group, data = my_data)
+```
+
+
++ ####Interpret
+
+As the **p-value** is less than the **significance level** 0.05, 
+we can conclude that there are **significant differences** between the **treatment groups**.
+
+
++ ####**Multiple pairwise-comparison** between **groups**
+
+From the **output** of the **Kruskal-Wallis test**, we know that there is a **significant difference** between **groups**, 
+but we **don’t know** which **pairs of groups** are **different**.
+
+It’s **possible** to use the function `pairwise.wilcox.test{stats}` to calculate **pairwise comparisons** 
+between **group levels** with **corrections** for **multiple** testing.
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+  pairwise.wilcox.test(PlantGrowth$weight, PlantGrowth$group, p.adjust.method = "BH")
+```
+
+#
+      The pairwise comparison shows that, only trt1 and trt2 are significantly different (p < 0.05).

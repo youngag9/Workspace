@@ -1,0 +1,93 @@
+---
+title: '2. Partitioning Clustering Analysis : (3) Avoiding Non-existing Clusters'
+output: html_document
+---
+
+##존재하지도 않는 군집화 피하기
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+set.seed(1234)
+
+library(fMultivar)
+df <- rnorm2d(n = 1000, rho = .5)
+class(df)
+
+df <- as.data.frame(df)
+head(df)
+```
+
+----
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+library(DT)
+datatable(df)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+plot(df, main = 'Bivariate Normal Distribution with rho = 0.5')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(NbClust)
+( nc <- NbClust(data = df, min.nc = 2, max.nc = 15, method = 'kmeans') )
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# dev.new()
+
+nc$Best.n
+nc$Best.n[1, ]
+
+barplot(
+  table(nc$Best.n[1, ]), 
+  xlab = 'Number of clusters', 
+  ylab = 'Number of criteria', 
+  main = 'Number of clusters chosen by 26 criteria')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(cluster)
+( fit.pam <- pam(x = df, k = 2) )
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+df$cluster <- factor(fit.pam$clustering)
+head(df)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(ggplot2)
+ggplot(data = df, aes(x = V1, y = V2, color = cluster, shape = cluster)) + 
+  geom_point() + 
+  ggtitle('Clustering of Bivariate Normal Data')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+nc$All.index[, 4]   # CCC column
+
+plot(nc$All.index[, 4], type = 'o', ylab = 'CCC', xlab = 'Number of clusters', col = 'blue')
+```
+

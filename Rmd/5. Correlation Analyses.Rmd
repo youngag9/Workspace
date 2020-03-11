@@ -1,0 +1,83 @@
+---
+title: "Correlation Analysis"
+output: html_document
+---
+
+#
+    This chapter contains articles for computing and visualizing correlation analyses in R. Recall that, correlation analysis is used to investigate the association between two or more variables. A simple example, is to evaluate whether there is a link between maternal age and child’s weight at birth.
+   
+(@) ####Correlation Test Between **Two** Variables
+    * Brief outline:  
+      1\) What is correlation test?  
+      2\) Methods for correlation analyses  
+      3\) **Correlation formula**  
+      4\) **Pearson** correlation formula  
+      5\) **Spearman** correlation formula  
+      6\) **Kendall** correlation formula  
+      7\) Compute **correlation** in R  
+      8\) R functions  
+      9\) Import your data into R  
+      10\) Visualize your data using scatter plots  
+      11\) Preliminary test to check the test **assumptions**  
+      12\) **Pearson correlation test**  
+      13\) **Kendall rank correlation test**  
+      14\) **Spearman rank correlation coefficient**  
+      15\) Interpret **correlation coefficient**  
+        
+<!-- ![](images/4.png){width=400px} -->
+
+
+(@) ####Correlation Matrix: Analyze, Format and Visualize
+    * Correlation matrix is used to analyze the correlation between multiple variables at the same time.
+    * Brief outline:  
+      1\) What is correlation matrix?  
+      2\) Compute correlation matrix in R  
+      3\) R functions  
+      4\) Compute correlation matrix  
+      5\) Correlation matrix with significance levels (p-value)  
+      6\) A simple function to format the correlation matrix  
+      7\) Visualize correlation matrix  
+          + Use symnum() function: Symbolic number coding
+          + Use corrplot() function: Draw a correlogram
+          + Use chart.Correlation(): Draw scatter plots
+          + Use heatmap()
+          
+<!-- ![](images/5.png){width=400px}   -->
+
+(@) ####Visualize Correlation Matrix using Correlogram
+    * Correlogram 
+        - is a graph of correlation matrix. 
+        - Useful to highlight the most correlated variables in a data table.      
+    * In this plot, correlation coefficients are colored according to the value. 
+    * Correlation matrix can be also reordered according to the degree of association between variables.
+    * Brief outline:  
+      1\) Install R corrplot package  
+      2\) Data for correlation analysis  
+      3\) Computing correlation matrix  
+      4\) Correlogram : Visualizing the correlation matrix  
+      5\) Visualization methods  
+      6\) Types of correlogram layout  
+      7\) Reordering the correlation matrix  
+      8\) Changing the color of the correlogram  
+      9\) Changing the color and the rotation of text labels  
+      10\) Combining correlogram with the significance test  
+      11\) Customize the correlogram  
+      
+```{r code1, echo=TRUE, include=TRUE, warning=FALSE, message=FALSE}
+library(corrplot)
+library(RColorBrewer)
+
+M <-cor(mtcars)
+corrplot(M, type="upper", order="hclust", col=brewer.pal(n=8, name="RdYlBu"))
+```
+
+(@) ####Elegant Correlation Table using xtable R Package
+    * The aim of this article is to show you how to get the lower and the upper triangular part of a correlation matrix. 
+    * We will use also xtable R package to display a nice correlation table.
+    * Brief outline:  
+      1\) Correlation matrix analysis  
+      2\) Lower and upper triangular part of a correlation matrix  
+      3\) Use xtable R package to display nice correlation table in html format  
+      4\) Combine matrix of correlation coefficients and significance   levels
+      
+<!-- ![](images/6.png){width=600px} -->

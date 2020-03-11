@@ -1,0 +1,773 @@
+---
+title: "Generalized Linear Model"
+output: html_document
+---
+
+###1. 일반화선형모델(Generalized Linear Models) 이란 ?
+#
+    선형모델(Linear Models)의 틀에 명백히, 비정규성을 따르는 종속변수를 포함하는 확장모델
+      - 조건적 평균 반응함수를 적합화
+      - 반응변수가 지수분포(exponential distribution)를 따른다 가정
+      - 표준선형모델을 확장
+      - 모수추정 : 최소제곱법(OLS)보다, 최대우도법(MLE)을 사용
+
+---
+
+###2. 일반화선형모델의 대표적인 두가지 모델
+#
+    1. 로지스틱(Logistic) 회귀분석 : 결과변수가 범주형 변수(categorical variables) 인 경우
+      a) 이산형 변수  (예: 예/아니오, 성공/실패, 사망/생존 등)
+      b) 다항 변수    (예: 미흡/좋음/매우좋음, 민주당/공화당/자유당 등)
+      
+    2. 포아송(Poisson) 회귀분석 : 결과변수가 빈도(개수) 변수(count variables) 인 경우
+      a) 변수의 값에 제한
+      b) 음수가 없음
+      c) 예: 항간질제의 8주 복용이 발작빈도에 미치는 영향분석
+
+---
+
+###3. 표준선형모델의 구조방정식
+$$\mu_Y = \beta_0 + \sum\limits_{j=1}^{p}{\beta_{j}}{X_{j}}$$
+
+
+#
+    표준선형모형 : Y와 X가 선형관계인 모형
+      1) 종속변수 Y 가 정규성을 따른다(정규분포)고 가정
+      2) 계수도출절차: 최소제곱합(OLS, Ordinary Least Squares)
+
+---
+
+###4. 일반화선형모델의 구조방정식
+$$g(\mu_Y) = \beta_0 + \sum\limits_{j=1}^{p}{\beta_{j}}{X_{j}}$$
+
+#
+    일반화선형모형 : Y와 X가 선형관계가 아닌 모형
+
+- $g(\mu_Y)$ : 조건부 평균함수 == 연계함수(link function)  
+- Y 의 정규성 가정을 느슨하게 함. 대신 지수분포를 따른다고 가정
+
+    <!-- ![](images/exponential_distribution.png){width=300px} -->
+- 계수 도출 절차 :  
+    1) 연계함수(link function, $g(\mu_Y)$)와 확률분포를 특정하고,  
+    2) 반복적인 최대우도법(Maximum Likelyhood Estimation, MLE) 절차를 통해,  
+  계수를 도출
+  
+---
+
+###5. 최대우도법 (MLE, Maximum Likelyhood Estimation)
+#
+    관측치가 고정되고, 이 관측치가 나오게 하는, 가장 그럴듯한 모수값 추정
+    즉, 우도(likelyhood)를 가장 높아지게 하여, 모수를 추정하는 방법
+    
+    ※ 우도(=가능도, likelyhood) : 관측치가 관찰될 가능성(함수로 표현)
+
+---
+
+###6. glm{stats} 함수
+
+#
+    1. Usage: glm( formula, family = family(link = function), data = )
+    2. family 인자
+        - 특정 확률분포 지정
+        - 지정한 확률분포에 상응하는 연계함수(link function) 지정
+          ------------------------------------------------------------------------
+                 Family                       Default Link Function
+           (특정 확률분포 지정)       (지정 확률분포에 상응하는 기본 연계함수, 생략가능) 
+          ------------------------------------------------------------------------
+            binomial                  (link = 'logit')
+            gaussian                  (link = 'identify')
+            gamma                     (link = 'inverse')
+            inverse.gaussian          (link = '1/m^2')
+            poisson                   (link = 'log')
+            quasi                     (link = 'identity', variance = 'constant')
+            quasibinomial             (link = 'logit')
+            quasipoisson              (link = 'log')
+          ------------------------------------------------------------------------
+    3. 적합한 분석모형 : 
+        a. 로지스틱 회귀분석 (Logistic Regression)
+        b. 포아송 회귀분석 (Poisson Regression)
+        c. 생존분석 (Survival Analysis)
+
+---
+
+###7. 로지스틱 회귀분석 (logistic regression analysis)
+$$log_e(\frac{\pi}{1-\pi}) = \beta_0 + \sum\limits_{j=1}^{p}{\beta_{j}}{X_{j}}$$
+
+  where,  
+    - $\pi = \mu_Y$ : Y 의 조건적 평균 (즉, 주어진 X 값들의 집합에서, Y = 1 인 확률)  
+    - $(\pi/1-\pi)$ : Y = 1 의 승산  
+    - $log(\pi/1-\pi)$  : 로그승산 또는 로짓(logit)  
+    - 지정 확률분포 :  이항분포를 따름  
+      <!-- ![](images/binomial_distribution.png){width=300px}   -->
+    - 지정 확률분포에 상응하는 연계함수 : $log_e(\frac{\pi}{1-\pi})$ (logit, 로그승산)  
+    - 적합화(fitting) :  
+      
+      > glm(Y ~ X1 + X2 + X3, family = binominal(link = 'logit'), data = mydata)
+
+---
+
+###8. 포아송 회귀분석 (poisson regression analysis)
+$$log_e(\lambda) = \beta_0 + \sum\limits_{j=1}^{p}{\beta_{j}}{X_{j}}$$
+
+  where,  
+    - $\lambda$ : Y의 평균  
+    - 지정 확률분포 :  포아송 분포를 따름  
+    - 지정 확률분포에 상응하는 연계함수 : $log(\lambda)$  
+    - 적합화(fitting) :  
+      
+      > glm(Y ~ X1 + X2 + X3, family = poisson(link = 'log'), data = mydata)
+
+---
+
+###9. 표준선형모델은, 일반화선형모델의 특별한 사례임
+$$\mu_Y = \beta_0 + \sum\limits_{j=1}^{p}{\beta_{j}}{X_{j}}$$
+
+  where,  
+    - 지정 확률분포 :  정규분포(gaussian)를 따름  
+    - 지정 확률분포에 상응하는 연계함수 : $g(\mu_Y) = \mu_Y$ or 'identity'
+    - 적합화(fitting) :  
+      
+      > glm(Y ~ X1 + X2 + X3, family = gaussian(link = 'identity'), data = mydata)
+      > lm(Y ~ X1 + X2 + X3, data = mydata)
+
+---
+
+###10. 일반화선형모델의 지원함수들
+
+#
+    표준선형모델의 지원함수들에 상응하는 버전을 제공
+    -------------------------------------------------------------------------------
+          Supported functions                       Descriptions
+    -------------------------------------------------------------------------------
+      summary()                       Fitted Model의 세부결과 출력
+      coefficients(), coef()          Fitted Model의 모델모수목록(절편,기울기) 제공
+      confint()                       모델모수의 신뢰구간 제공(기본: 95%)
+      residuals()                     Fitted Model의 잔차목록 제공
+      anova()                         2개의 Fitted Model을 비교, ANOVA 표 생성
+      plot()                          Fitted Model의 적합성 평가위한 진단플롯 생성
+      predict()                       Fitted Model을 통해, 새로운 데이터셋의 반응값 예측
+      deviance()                      Fitted Model의 편차 반환
+      df.residual()                   Fitted Model의 잔차 자유도 반환
+    -------------------------------------------------------------------------------
+
+---
+
+###11. 일반화선형모델의 적합성 진단(diagnostics)
+
+#
+    1) 모델 적합성 평가는, OLS 회귀분석과 마찬가지로 일반화 회귀분석에서도 중요함
+    2) 그러나 적절한 평가절차에 대한 통계공동체의 합의가 거의 없음
+    3) 모델 적합성 평가를 위한 전형적 방법
+        - 원래 반응변수의 행렬에 표현된 예측변수를,
+          이탈유형의 잔차에 대응하여 플롯 생성
+        - 일반적인 진단플롯은 아래와 같음
+            아래의 코드를 통해, R이 제공하는,
+              가. 모수치 (hat values)
+              나. 스튜던트 잔차 (studentized residuals)
+              다. 쿡의 거리 (Cook's Distance)
+              
+            > plot( predict( model, type = 'response' ) )
+            > residuals( model, type = 'deviance' )
+            
+            ※ model : glm{stats} 함수가 반환한 객체
+    4) 특이한(문제가 있는) 관측치(이상치, 영향치, 지렛대 등)를 확인하기 위한,
+       cutoff 변수를 정하는데, 일반적으로 합의된 방법은 없음
+       - 다른 변수와 비교해서, 상대적으로 평가해야 함
+       - 하나의 접근법으로는, 각 통계치에 대한 인덱스 플롯을 생성하고
+         예외적인 값을 조사
+         
+         예를들어, 3가지 진단플롯 산출을 위해, 아래 코드 사용 가능
+         
+         > plot( hatvalues(model) )
+         > plot( rstudent(model) )
+         > plot( cooks.distance(model) )
+         
+       - 다른 접근법으로, 아래 코드를 이용해, 하나의 omnibus 플롯 산출가능
+        
+         > library(car)
+         > influencePlot(model)
+         
+         ※ 수평축: 지렛대(leverage), 
+            수직축: 표준화 잔차,
+            플롯기호: 쿡의 거리에 비례
+    5) 4)의 진단플롯은, 
+      - 결과변수가 많은 수치를 가지고 있을 때는, 크게 도움이 되나,
+      - 결과변수의 수치가 제한적인 경우(예: 로지스틱회귀분석), 플롯의 유용성 감소
+
+---
+
+###12. 로지스틱 회귀분석 (logistic regression analysis)
+
+#
+    일련의 연속적 및 혹은 범주화된 예측변수의 집합으로부터 이분법적인 결과를 예측하고자 할 때, 유용함
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# install.packages('AER', dependencies = TRUE)
+library(AER)
+data(Affairs)
+
+summary(Affairs)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(prettyR)
+freq(Affairs$affairs)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(DT)
+datatable(Affairs)
+```
+
+---
+
+#
+    만남횟수(Affairs$affairs) 변수가 있지만, 현 분석의 목표은, 불륜경험여부라는 이분법적인 결과임.
+    분석목표에 맞는 파생변수(Affairs$ynAffair, factor타입)를 생성함
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+Affairs$ynAffair[Affairs$affairs > 0] <- 1
+Affairs$ynAffair[Affairs$affairs == 0] <- 0
+
+Affairs$ynAffair <- factor(Affairs$ynAffair, levels = c(0, 1), labels = c('No', 'Yes'))
+```
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(prettyR)
+freq(Affairs$ynAffair)
+```
+
+---
+
+#
+    불륜여부라는 결과(반응,종속)변수에 대한, 로지스틱 회귀분석을 적합시킴(fitting)
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+fit.full <- glm(ynAffair ~ gender + age + yearsmarried + children + religiousness + education + occupation + rating, data = Affairs, family = binomial(link = 'logit'))
+
+# The same formula, family and link function
+# fit.full <- glm(ynAffair ~ . - affairs, data = Affairs, family = binomial())
+
+# The same formula, family and link function
+# fit.full <- glm(ynAffair ~ . - affairs, data = Affairs, family = binomial)
+
+fit.full
+```
+
+#
+    각 회귀계수의 유의확률(P-value)에 대한, 가설설정은 아래와 같음
+      H0 : 모회귀계수는 0임
+      H1 : not H0
+ 
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+summary(fit.full)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+fit.reduced <- glm(ynAffair ~ age + yearsmarried + religiousness + rating, data = Affairs, family = binomial(link = 'logit'))
+
+# The same formula, family and link function
+# fit.reduced <- glm(ynAffair ~ . - affairs - gender - children - education - occupation, data = Affairs, family = binomial())
+
+# The same formula, family and link function
+# fit.reduced <- glm(ynAffair ~ . - affairs - gender - children - education - occupation, data = Affairs, family = binomial)
+
+fit.reduced
+```
+
+#
+    각 회귀계수의 유의확률(P-value)에 대한, 가설설정은 아래와 같음
+      H0 : 모회귀계수는 0임
+      H1 : not H0
+ 
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+summary(fit.reduced)
+```
+
+---
+
+#
+    1) 위의 축소모형(fit.reduced) 에서, 각 회귀계수는 모두 통계적으로 유의미함
+    2) 위의 두 모형(fit.full, fit.reduced)은 내포모델(nested model)이기 때문에,
+       이 두 모형을 비교하기 위해서, anova{stats} 함수를 이용할 수 있음
+       이때, 일반선형모델의 검증으로, 카이제곱을 이용함
+       
+       가설설정은 다음과 같음(카이제곱은 독립성 검정임을 있지 말것!!)
+       H0 : 두 모형은 차이가 없음
+       H1 : 두 모형은 차이가 있음
+       
+       아래 카이제곱 검정결과, Model 2이 통계적으로 유의미하지 않기 때문에,
+       귀무가설(H0) 채택. 따라서, Model 1, 2 모두 적합함을 의미함. 
+       이로부터 알 수 있는 것은, 4개 예측변수로 이루어진 모형(fit.reduced)에 비해,
+       9개 예측변수로 이루어진 모형(fit.full)의 예측력이 증가하지 않음을 강화해줌.
+       
+       따라서 두 모델 중, 보다 단순한 모델에 기초하여 해석하는 편이 더 좋음
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+anova(fit.reduced, fit.full, test = 'Chisq')
+```
+
+---
+
+#
+    ● 모델 모수(즉, 모회귀계수)의 해석
+      - 로지스틱 회귀분석에서, 모델화된 반응은, Y=1일 때의 로그(승산)임
+      - 회귀계수는 모든 다른 예측변수가 일정할 때(통제), 한
+        예측변수의 단위 당 변화에 대한, 반응변수의 로그(승산)의 변화를 의미함.
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+coef(fit.reduced)
+```
+
+#
+    그러나 로그(승산, Logarithms)는 해석하기 어렵기 때문에, 결과를 승산척도로 지수화(상대적인 비율, Exponentials) 할 수 있음
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+exp( coef(fit.reduced) )
+```
+
+#
+    따라서 위의 지수로 해석하면,
+      - 결혼기간(yearsmarried)이 1년 증가할 때함
+        (단, 다른 예측변수들은 일정할 때, 즉 통제하에 있을 때),
+        혼외정사의 승산이 1.106배 증가
+      - 역으로, 연령(age)이 1년 증가하면서 혼회정사의 승산이 0.965배 변화함
+      - 즉 혼외정사의 승산은, 결혼기간의 증가에 따라서 증가하는 반면, 
+        연령/종교/결혼만족도의 증가에 따라 감소함을 알 수 있
+      - 또한 이 모형에서 모든 예측변수가 0이 될 수 없으므로, 
+        절편(intercept)은 의미가 없음
+
+#
+    모형의 각 회귀계수에 대한 신뢰구간(confidence interval)을 구하려면,
+      > exp( confint(fit.reduced) )
+      위의 코드를 통해, 승산척도인 각 계수의 95% 신뢰구간을 산출
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+exp( confint(fit.reduced) )
+```
+
+#
+    만일 예측변수의 일(한) 단위 변화에 대한 관심보다,
+    이항 로지스틱 회귀분석에서,
+      - 반응변수에서 높은 변수값의 승산변화에 따른,
+      - 예측변수 n단위 변화는 exp(β)^n 이 됨
+    따라서 위의 축소모형의 회귀계수에 따르면, 느느
+      - 결혼기간(yearsmarried)의 1년 증가는
+      - 다른 예측변수가 일정할 때, 불륜승산이 1.1106배 커지며,
+      - 결혼기간의 10년 증가시, 불륜승산이 1.106^10 (약 2.7)배 승산증가 할 것임
+
+---
+
+#
+    ● 결과확률에 대한 예측변수의 효과평가
+      - 승산(로그)보다는, 확률을 이해하고 해석하기 쉬움
+      - 결과확률에 대한, 예측변수의 효과를 관찰하기 위해 predict{stats} 함수 사용
+      - predict{stats} 함수의 사용절차
+        1. 관심이 있는 예측변수 값이 포함된, 인위적인 데이터셋을 만듦
+        2. 이 인위적인 예측변수의 값에 따라, 결과가 발생하는 확률을 예측
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# 1. 관심이 있는 예측변수 값이 포함된, 인위적인 데이터셋을 만듦
+testdata <- data.frame(
+  rating = c(1,2,3,4,5),
+  age = mean(Affairs$age),
+  yearsmarried = mean(Affairs$yearsmarried),
+  religiousness = mean(Affairs$religiousness)
+)
+
+library(DT)
+datatable(testdata)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# 2. 이 인위적인 예측변수의 값에 따라, 결과가 발생하는 확률을 예측
+suppressWarnings(expr = {
+  testdata$prob <- predict(fit.reduced, newdata = testdata, type = 'response')
+})
+
+testdata
+```
+
+#
+    위의 결과에서 혼회정사 확률(prob)이,
+      - 결혼만족(rating)이 1(매우 불행)일 때, 0.53 (prob)에서,
+      - 결혼만족(rating)이 5(매우 만족)일 때, 0.15 (prob)로 감소
+    함을 알 수 있음. 
+    (단, 결혼만족을 제외한 기타 예측변수들을 모두 통제할 때)
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# 1. 관심이 있는 예측변수 값이 포함된, 인위적인 데이터셋을 만듦
+testdata <- data.frame(
+  rating = mean(Affairs$rating),
+  age = seq(17, 57, by = 10),
+  yearsmarried = mean(Affairs$yearsmarried),
+  religiousness = mean(Affairs$religiousness)
+)
+
+library(DT)
+datatable(testdata)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# 2. 이 인위적인 예측변수의 값에 따라, 결과가 발생하는 확률을 예측
+suppressWarnings(expr = {
+  testdata$prob <- predict(fit.reduced, newdata = testdata, type = 'response')
+})
+
+testdata
+```
+
+#
+    위의 결과에서 혼외정사 확률이,
+      - 연령(age)이 17 -> 57로 증가할 때,
+        혼외정사 확률은 0.34 -> 0.11로 감소함
+
+    ※ 위와 같은 방법으로, 각 예측변수가 결과에 미치는 효과를 탐색할 수 있음
+
+---
+
+● 과대산포(Overdispersion)  
+    - 이항분포로부터 추출한 데이터에서, 
+      예상되는 분산은 $\sigma^{2} = n\pi(1-\pi)$ 임 
+    - where,   
+        n : 관찰 사례수  
+        $\pi$ : Y=1 인 집단에 속하는 확률   
+    - 결과변수의 관찰된 분산이, 이항분포에서 기대되는 분산에 비해 클 때 발생  
+    - 왜곡된 표준오차와 부정확한 유의도 검정에 이르게 함  
+    - 과대산포가 존재할 때 glm{stats} 함수를 통해, 로지스틱 회귀모형으로 적합화 할 수 있음  
+      a. 이때 이항분포(binomial)보다는 준이항(quasibinomial)분포를 이용해야 함  
+      b. 과대산포를 점검하는 하나의 방법은, 이항모형에 있는 잔차 자유도를 전차편차와 비교하는 것임  
+        (이때, 비율이 1보다 **현저하게** 크다면, 과대산포의 증거임)  
+
+
+$$Φ = \frac{잔차편차(Residual deviance)}{잔차자유도(Residual df)}$$
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+overdispersion_ratio = deviance(fit.reduced) / df.residual(fit.reduced)
+overdispersion_ratio
+```
+
+#
+    위의 비율이 1에 가깝기 때문에, 과대산포(Overdispersion)은 없음
+
+---
+
+● 과대산포(Overdispersion)의 유의성 검정
+
+    - 우선 모형을 두 번 적합화 해야 함  
+    
+       a. 첫 번째는, `family = 'binomial'` 로 적합화  
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit <- glm(ynAffair ~ age + yearsmarried + religiousness + rating, family = binomial, data = Affairs) )
+```
+
+       b. 두 번째는, `family = 'quasibinomial'` 로 적합화 (과대산포가 존재시, 적합화 시에 지정)  
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit.od <- glm(ynAffair ~ age + yearsmarried + religiousness + rating, family = quasibinomial, data = Affairs) )
+```
+
+---
+
+     - 다음으로 아래와 같이 가설설정  
+          - H0 : Φ = 1    (과대산포가 없다) 
+          - H1 : Φ != 1   (과대산포가 있다)
+
+---
+
+     - 마지막으로 pchisq{stats} 함수를 이용하여, 과대산포에 대한 가설검정 수행
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+p_value <- pchisq(
+  summary(fit.od)$dispersion * fit$df.residual,
+  fit$df.residual,
+  lower = FALSE
+)
+
+cat('p-value of overdispersion: ', p_value)
+```
+
+      - p값이 통계적으로 유의미하지 않으므로, 귀무가설 채택 (H0 : Φ = 1)
+      - 즉 과대산포에 문제가 없음을 강력히 지지함
+
+---
+
+###13. 로지스틱 회귀분석의 확장 및 변이
+
+#
+    (1) 로버스트 로지스틱 회귀분석(Robust logistic regression)
+        - glmRob{robust} 함수를 이용하여 모델 적합화 수행
+        - 이상치와 영향치를 포함하는 로지스틱 회귀모델를 적합화 하는데 이용
+        - 로버스트 일반화선형모델의 적합화를 위해 수행
+    (2) 다항 로지스틱 회귀분석(Multinomial logistic regression)
+        - 반응변수가 세 개 이상의 비서열적 범주(예: 미혼/기혼/이혼)를 가진 경우
+        - mlogit{mlogit} 함수를 이용하여 모델 적합화 수행
+    (3) 서열적 로지스틱 회귀분석(Ordinal logistic regression)
+        - 반응변수가 서열변수일 때(예: 나쁨/좋음/우수 같은 신용위험도)
+        - lrm{rms} 함수를 이용하여 모델 적합화 수행
+    (4) 다중범주 로지스틱 회귀분석
+        - 다중범주(순서가 있는 범주와 순서가 없는 범주 모두)를 가진 반응변수를 모델화 하는 능력은 중요한 확장임
+        - 그러나 여기엔 해석의 복잡성이 존재하게 됨
+        - 이 경우, 모델 적합성과 회귀진단에 대한 평가 역시 보다 복잡함
+
+---
+
+###14. 포아송 회귀분석(Poisson regression)
+
+#
+    연속적이거나 범주화된 예측변수의 집합으로부터 나온, 결과변수가 빈도변수(count variables) 일 때,
+    이를(빈도) 예측하고자 할 때 유용함
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(robust)
+data(breslow.dat)
+```
+
+---
+
+#
+    자료는, {robust} 패키지에서 제공하는, Breslow의 발작 자료임
+    특히 항경련제의 8주 복용이, 발작빈도에 미치는 영향을 검토함
+      - 연령과 발작빈도임
+      - 발작빈도는 8주 전과 후의 단순 혹은 복합부분 발작의 수
+      - 실험대상은 위약(placebo)과 항경련제(progabide) 투여집단으로, 무작위 할당
+      - SumY (무작위 이후, 8주동안의 발작빈도)가 반응변수임
+      - 치료조건(Trt), 연령(Age), 8주간보고된 발작빈도(Base)가 예측변수임
+      - 기초발작빈도(base)와 연령은, 이들이 반응변수에 미치는 잠재적 효과 때문에 포함됨
+
+#
+    ※ 분석목표: 공변수들을 고려한 후에, 약물투여가 발작빈도를 감소시키는 증거가 있는지 확인
+
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+library(DT)
+datatable(breslow.dat)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+names(breslow.dat)
+
+summary(breslow.dat[c(6,7,8,10)])
+```
+
+#
+    위의 요약통계결과, 
+      - 기초발작빈도(base)와 무작위화 이후 발작의 분포(sumY)는 크게 치우쳐 있음
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+op <- par(no.readonly = TRUE)
+par(mfrow=c(1,2))
+
+attach(breslow.dat)
+
+hist(sumY, breaks = 20, xlab = 'Seizure Count', main = 'Distribution of Seizure')
+boxplot(sumY ~ Trt, xlab = 'Treatment', main = 'Group Comparisons')
+
+par(op)
+```
+
+#
+    위의 플롯에서,
+      - 종속변수가 치우쳐 있으며
+      - 이상치의 존재를 분명히 알 수 있음
+      - 약물복용중 발작 빈도는 더 적어지고, 분산도 적음
+        (포아송 분포에서는, 평균이 작을수록, 분산이 더 작아질 것을 기대가능)
+
+---
+
+#
+    포아송 회귀분석에서는, 이분산성(등분산성의 반대)은 문제가 되지 않음
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit <- glm(sumY ~ Base + Age + Trt, data = breslow.dat, family = poisson) )
+
+summary(fit)
+```
+
+#
+    위의 회귀모형 요역결과에서,
+      - 편차, 모회귀계수, 표준오차 그리고 귀무가설(H0: 모회귀계수가 0임)의 검정결과를 제공함
+      - 모든 예측변수는 통계적으로 유의미함
+
+---
+
+#
+    ● 모회귀계수의 해석
+      - 모델계수는 coef{stats} 함수를 이용하거나, summary{stats} 함수의 결과물에 있는 Coefficients 테이블에서 얻음
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+coef(fit)
+```
+
+#
+      - 포아송 회귀분석에서 종속변수는 조건평균의 로그(log(λ))임
+      - 연령(age) 회귀계수는 연령이 한살 증가하면, 기초발작빈도(Base)와 치료조건(Trt)이 일정할 때,
+        발작의 로그평균이 0.0227 증가함을 의미
+      - 실험참여자 중, 기초발작빈도(Base)나 연령(Age)이 0인 사례가 없기 때문에,
+        이 사례에서 절편은 의미가 없음
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+exp(coef(fit))
+```
+
+#
+      - 보통 종속변수의 로그화된 변수보다, 원자료 변수(발작의 로그수치보다 단순발작빈도)에 대한 회귀계수를 해석하기가 더 수월함
+      - 이를 위해서, 회귀계수를 지수화(exponentials) 함
+      - 이제 연령이 한 살 증가하면, 다른 변수가 일정할 때, 발작빈도는 1.023배만큼 변하는 것을 알 수 있음. 
+        이는 연령증가가 발작빈도의 증가와 관련되어있음을 의미함
+      - 보다 중요한 것은, Trt의 한단위 변화(즉, 위약[placebo] -> 항경련제[progabide]로의 변화)에 따라서, 
+        발작빈도는 0.86배만큼 변함. 
+        즉, 기초발작빈도(Base)와 연령(Age)가 일정할 때, 위약복용집단에 비해서, 항간질성약물 복용집단의 발작빈도는 20% 감소함
+        
+      ※ 로지스틱 회귀분석과 마찬가지로, 포아송 모델에서 지수화된 모수(회귀계수)는, 반응변수에 더하기 효과가 아닌,
+         곱하기 효과를 지닌다는 사실에 주목해야 함
+
+---
+
+#
+    ● 과대산포(Overdispersion)
+      - 로지스틱 회귀분석과 마찬가지로, 포아송 회귀분석에서도 과대산포 문제를 평가해야 함
+      - 포아송 분포에서, 분산과 평균은 같음
+      - 포아송 분포에서 과대산포는, 반응변수의 관찰된 분산이 포아송 분포의 예측치보다 클 때에 발생
+      - 과대산포는 빈도자료를 다룰 때 종종 출현하며, 결과해석에 부정적 영향을 미치기 때문에, 이에 대해 자세히 검토할 필요가 있음
+      - 과대산포가 발생하는 이유는 여러가지임 :
+        가. 중요한 예측변수의 누락
+        나. 상태의존성(State dependency)현상
+            + 관찰대상 내에서 빈도는, 각 사건(event)의 독립성을 가정함
+            + 발작자료의 사례에서, 각 환자에게 발작이 발생할 확률은, 다른 발작으로부터 독립적이라고 가정함
+            + 그러나 위의 가정은 종종 지지되기 어려움
+            + 특정 개인의 발작이 발생할 확률은, 이미 39번째 발작이 일어난 상태에서, 40번째 발작을 할 확률과 동일하지 않을 가능성이 큼
+        다. 시계열 연구에서, 자료의 반복측정에 내재한 집락화(Clustering)
+      - 과대산포가 존재하지만, 모델에서 이를 고려하지 않는다면,
+        가. 표준오차와 신뢰구간이 너무 적고
+        나. 통계적 유의성 검정도 너무 관대해짐 (즉, 존재하지 않는 효과를 발견)
+      - 로지스틱 회귀분석과 마찬가지로, 잔차의 자유도에 대한 잔차편차의 비율이 1보다 훨씬 크다면, 과대분산(overdispersion)을 시사함
+
+---
+
+#
+    {qcc} 패키지에서 포아송 사례의 과대분산 검정을 제공함
+      - 아래에서, 유의도 검정결과 p-value가 유의수준(0.05)보다 작기 때문에, 과대산포를 강력히 시사함
+        (H0 : 과대산포가 없음, H1 : 과대산포가 있음)
+    
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(qcc)
+qcc.overdispersion.test(breslow.dat$sumY, type = 'poisson')
+```
+
+---
+
+#
+      - glm{stats} 함수를 이용하여, family='poisson'을, family='quasipoisson'으로
+        대체하여 모델을 적합화 할 수 있음 (이는, 로지스틱 회귀분석에서 과대산포 존재시 적용했던 방법과 동일함)
+      - 의사포아송 접근에서, 모수검정은 포아송 접근과 동일함
+        그러나 표준오차가 매우 큼
+      - 아래 예제와 같이, 표준오차가 커짐으로서, Trt와 Age이 통계적으로 유의미하지 않은 결과를 가져옴
+      - 과대산포를 고려할 때, 기초발작빈도(Base)와 연령(Age)을 통제한 후 항경련제를 복용한다고 해서,
+        위약복용보다 발작빈도를 감소시킨다고 선언할 근거는 충분하지 않음
+      - 과대산포로 인한 아래의 결과는, 실제 현실에서 항경련제 효능에 대한 어떠한 함축도 포함하고 있지 않음
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit.od <- glm(sumY ~ Base + Age + Trt, data = breslow.dat, family = quasipoisson) )
+
+summary(fit.od)
+```
+
+---
+
+#
+    ● 포아송 회귀분석의 확장(변이)
+      - 기본 포아송 회귀분석 모델을 확장한, 여러 유용한 모델을 제공함
+      1. 여러 시간기간을 가진 모델
+          + 지금까지 설명한 포아송 회귀모델에서, 반응변수는 고정된 시간동안의 빈도
+            (예: 8주간 발작빈도, 작년에 발생한 교통사고횟수, 하루동안의 친사회적 행동빈도 등)임
+          + 관찰의 시간길이는 일정함
+          + 관찰의 시간길이가 변하는 포아송 회귀모델을 적합시킬 수 있음
+          + 이 경우, 반응변수는 율(rate) 임
+          + 율(rate)을 분석하기 위해서는, 각 관찰동안 발생한 빈도에 대한 시간길이를 기록한 변수를 포함해야 함
+          + 이 새로운 모델을 적합시키기 위해서는, glm{stats} 함수의 offset 인자를 이용해야 함
+          + 예: Breslow 연구에서, 참여환자의 기간이 14일 ~ 60일까지 걸쳐있다고 가정할 때, 
+                발작율(rate)을 종속변수로 사용할 수 있음
+                (단, 각 환자가 참여한 시간을 기록[time변수]했다고 가정한다면)
+                
+                여기서, sumY는 환자를 관찰한 시간동안 발생한 발작빈도임
+          + 이때 포아송 회귀모델의 구조방정식의 변화가 아래와 같이 발생함
+
+$$log_e(\lambda) = \beta_0 + \sum\limits_{j=1}^{p}{\beta_{j}}{X_{j}}$$
+$$log_e(\frac{\lambda}{time}) = \beta_0 + \sum\limits_{j=1}^{p}{\beta_{j}}{X_{j}}$$
+$$log_e(\lambda) = log_e(time) + \beta_0 + \sum\limits_{j=1}^{p}{\beta_{j}}{X_{j}}$$
+
+```{r eval=FALSE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+  fit <- glm(sumY ~ Base + Age + Trt, data = breslow.dat, offset = log(time), family = poisson)
+```
+
+#
+      2. 0 과잉 포아송 회귀분석(zero-inflated poisson regression)
+          + 데이터 셋에서, 빈도가 0인 사례들이, 포아송 모델에서 예측되는 사례보다 많은 경우가 있
+          + 이같은 상황은, 측정대상인 행동경험이 없는 하위인구집단이 존재할 때 발생
+          + 예: 로지스틱 회귀분석의 혼회정사 데이터셋에서, 원래결과변수는 지난 1년동안의 혼외정사의 빈도를 조사했음. 
+            그러나 조사대상 시간이 아무리 길더라도, 혼외정사를 전혀하지 않은 도덕적 부부들의 하위집단이 존재할 것임
+          + 구조적 영(structural zeros)이라고 함 
+          + 영과일 포아송 회귀분석을 통해, 자료분석 가능
+          + 이 방법은 두 모델을 동시에 적합화 함
+            하나는, 혼외정사 여부를 예측하는 모델
+            또 다른 하나는, 도덕적인 집단을 배제하고 혼외정사 빈도를 예측하는 모델
+          + 이는 로지스틱 회귀분석(구조적 0을 예측하기 위한)과 포아송 회귀분석(구조적 0을 제외한, 관찰대상의 혼외정사빈도를 예측하기
+            위한)의 결합모델임
+          + zeroinfl{pscl} 함수를 이용하여 모델 적합화 가능
+          
+      3. 로버스트 포아송 회귀분석(robust poisson regression)
+          + 로버스트 포아송 회귀분석을 포함하여, 로버스트 일반화선형모델의 적합화를 위해 glmRob{robust} 함수를 이용
+          + 이상치나 영향치가 존재할 때 유용함
+
+
+

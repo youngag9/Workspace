@@ -1,0 +1,305 @@
+---
+title: "Correlation Test Between Two Variables"
+output: html_document
+---
+
+(@) ###What is correlation test?
+
+    * **Correlation test** is used to evaluate the association between **two** or **more** variables.
+        + For instance, if we are interested to know whether there is a **relationship** between the heights of fathers and sons, **a correlation coefficient** can be calculated to answer this question.
+
+#
+    ※ If there is no relationship between the two variables (father and son heights), the average height of son should be the same regardless of the height of the fathers and vice versa.
+
+#
+   
+(@) ###Install and load required R packages
+
+#
+    ● We’ll use the {ggpubr} R package for an easy ggplot2-based data visualization
+
+```{r code1, echo=TRUE, warning=FALSE, message=FALSE, include=TRUE}
+
+# install.packages("ggpubr", dependencies = TRUE)
+library("ggpubr")
+```
+#
+    
+(@) ###Methods for correlation analyses
+
+    * There are different methods to perform **correlation analysis**:
+    * **Pearson correlation (r)**, 
+        + which measures **a linear dependence** between **two variables** (x and y). 
+        + It’s also known as **a parametric correlation test** because it depends to the **distribution** of the data. 
+        + It can be used only when x and y are from **normal distribution**. 
+        + The plot of **y = f(x)** is named the **linear regression curve**.
+    * **Kendall tau** and **Spearman rho**, which are **rank-based** **correlation coefficients** (**non-parametric**)
+
+#
+    ※ The most commonly used method is the Pearson correlation method.
+    
+#
+  
+(@) ###Correlation formula
+
+    * In the formula below,
+        + **x** and **y** are two **vectors** of length **n**
+        + **mx** and **my** corresponds to the **means** of **x** and **y**, respectively.
+#
+  
+(@) ###Pearson correlation formula
+
+      $r=\frac{\sum{(x - m_x)(y - m_y)}}{\sqrt{\sum{(x - m_x)^{2}}\sum{(y - m_y)^{2}}}}$
+
+    * mx and my are the means of x and y variables.
+    * The p-value (significance level) of the correlation can be determined :
+
+        (1) by using the correlation coefficient table for the degrees of freedom : df=n−2, where n is the number of observation in x and y variables.  
+        (2) or by calculating the t value as follow:
+
+            $t = \frac{r}{\sqrt{1 - r^{2}}}\sqrt{n - 2}$
+  
+              In the case (2) the corresponding p-value is determined using t distribution table for df=n−2
+
+#
+    ※ If the p-value is < 5%, then the correlation between x and y is significant.
+
+#
+  
+(@) ###Spearman correlation formula
+
+    * The Spearman correlation method computes the **correlation** between the **rank of x** and the **rank of y** variables.
+
+          $rho = \frac{\sum{(x' - m_x')(y'_i - m_y'))}}{\sqrt{\sum{(x' - m_x')^{2}}\sum{(y' - m_y')^2}}}$
+
+    * Where **x′=rank(x**) and **y′=rank(y)**
+
+#
+  
+(@) ###Kendall correlation formula
+
+    * The Kendall correlation method measures the **correspondence** between the **ranking** of **x** and **y** variables. 
+    * The **total numbe**r of possible **pairings** of **x** with **y** observations is **n(n−1)/2**, where **n** is the **size** of **x** and **y**.
+    * The **procedure** is as follow:
+        + **Begin** by **ordering** the **pairs** by the **x** values. If **x** and **y** are **correlated**, then they would have the **same relative rank orders**.
+        + Now, for each **yi**, count the **number of yj>yi** (**concordant pairs (c)**) and the **number** of **yj<yi** (**discordant pairs (d)**).
+
+    * Kendall **correlation distance** is defined as follow:  
+    
+        $tau = \frac{n_c - n_d}{\frac{1}{2}n(n-1)}$
+    
+        + Where,
+            - **nc**: **total number** of **concordant** pairs
+            - **nd**: **total number** of **discordant** pairs
+            - **n**: **size** of **x** and **y**
+#
+  
+(@) ###Compute correlation in R
+
+    * R functions
+        + **Correlation coefficient** can be computed using the functions `cor{stats}` or `cor.test{stats}`:
+            - `cor()` computes the **correlation coefficient**
+            - `cor.test()` **test** for **association/correlation** between **paired** samples. It returns both the **correlation coefficient** and the **significance level(or p-value)** of the correlation .
+    
+    * The simplified formats are:
+
+```{r code2, eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
+    cor(x, y, method = c("pearson", "kendall", "spearman"))
+    cor.test(x, y, method=c("pearson", "kendall", "spearman"))
+    
+    # x, y: numeric vectors with the same length
+    # method: correlation method
+```
+#
+    ※ If your data contain missing values, 
+       use the following R code to handle missing values by case-wise deletion  
+
+    cor(x, y,  method = "pearson", use = "complete.obs")
+
+#
+  
+(@) ###Import your data into R
+
+    * Here, we’ll use the built-in R data set **mtcars** as an example.
+
+    * The R code below computes the **correlation** between **mpg** and **wt** variables in **mtcars** data set:
+    
+```{r code3, echo=TRUE, message=FALSE, warning=FALSE, include=TRUE}
+library(dplyr)
+library(knitr)
+
+my_data <- mtcars
+
+kable(sample_n(tbl = my_data, size = 10, replace = FALSE), caption = "A Test Data Set.")
+```
+
+#
+    ※ We want to compute the correlation between mpg and wt variables.
+
+#
+  
+(@) ###Visualize your data using scatter plots
+
+    * To use R base graphs, click this link: 
+      scatter plot - R base graphs. 
+      Here, we’ll use the **ggpubr** R package
+    
+```{r code4, echo=TRUE, message=FALSE, warning=FALSE, include=TRUE}
+library("ggpubr")
+
+ggscatter(my_data, 
+          x = "mpg", 
+          y = "wt", 
+          add = "reg.line", 
+          conf.int = TRUE, 
+          cor.coef = TRUE, 
+          cor.method = "pearson",
+          xlab = "Miles/(US) gallon", 
+          ylab = "Weight (1000 lbs)")
+```
+
+#
+  
+(@) ###Preleminary test to check the test assumptions
+
+    * Is the **covariation linear**?  
+        + **Yes**, from the plot above, the **relationship** is **linear**.  
+        + In the situation where the **scatter plots** show **curved patterns**, we are dealing with **nonlinear association** between the **two variables**.
+
+    * Are the data from each of the **2 variables (x, y)** follow a **normal distribution**?  
+        + Use **Shapiro-Wilk normality test** –> R function: `shapiro.test()` and look at the **normality plot** —> R function: `ggpubr::ggqqplot()`  
+
+#
+    (1) Shapiro-Wilk test can be performed as follow:
+      - Null hypothesis: the data are normally distributed
+      - Alternative hypothesis: the data are not normally distributed
+
+```{r code5, echo=TRUE, message=FALSE, warning=FALSE, include=TRUE}
+# Shapiro-Wilk normality test for mpg
+shapiro.test(my_data$mpg) # => p = 0.1229
+
+# Shapiro-Wilk normality test for wt
+shapiro.test(my_data$wt) # => p = 0.09
+```
+
+#
+    ※ From the output, the two p-values are greater than the significance level 0.05 implying that the distribution of the data are not significantly different from normal distribution. 
+    In other words, we can assume the normality.
+
+#
+    (2) Visual inspection of the data normality using Q-Q plots (quantile-quantile plots). 
+        Q-Q plot draws the correlation between a given sample and the normal distribution.
+
+```{r code6, echo=TRUE, message=FALSE, warning=FALSE, include=TRUE}
+library("ggpubr")
+
+# mpg
+ggqqplot(my_data$mpg, ylab = "MPG")
+
+# wt
+ggqqplot(my_data$wt, ylab = "WT")
+```
+
+From the normality plots, we conclude that both populations may come from **normal** distributions.
+      
+    ※ Note that, if the data are not normally distributed, it’s recommended to use the non-parametric correlation, including Spearman and Kendall rank-based correlation tests.
+
+#
+  
+(@) ###Pearson correlation test
+
+    * Correlation test between **mpg** and **wt** variables:
+    
+```{r code7, echo=TRUE, message=FALSE, warning=FALSE, include=TRUE}
+( res <- cor.test(my_data$wt, my_data$mpg, method = "pearson") )
+```
+
+    In the result above :
+
+    a. t : the t-test statistic value (t = -9.559),
+    b. df : the degrees of freedom (df= 30),
+    c. p-value : the significance level of the t-test (p-value = 1.29410^{-10}).
+    d. conf.int : the confidence interval of the correlation coefficient at 95% (conf.int = [-0.9338, -0.7441]);
+    e. sample estimates : the correlation coefficient (Cor.coeff = -0.87).
+
+#
+  
+(@) ###Interpretation of the result
+
+#
+    The p-value of the test is 1.29410^{-10}, which is less than the significance level alpha = 0.05. 
+    We can conclude that wt and mpg are significantly correlated with a correlation coefficient of -0.87 and p-value of 1.29410^{-10}.
+    
+#
+  
+(@) ###Access to the values returned by cor.test() function
+
+    * The function `cor.test()` returns a **list** containing the following components:
+        + **p.value**: the p-value of the test
+        + **estimate**: the **correlation coefficient**
+        
+```{r code8, echo=TRUE, message=FALSE, warning=FALSE, include=TRUE}
+# Extract the p.value
+res$p.value
+
+# Extract the correlation coefficient
+res$estimate
+```
+
+#
+  
+(@) ###Kendall rank correlation test
+
+#
+    The Kendall rank correlation coefficient or Kendall’s tau statistic 
+    is used to estimate a rank-based measure of association. 
+    This test may be used if the data do not necessarily come from a bivariate normal distribution.
+
+```{r code9, echo=TRUE, message=FALSE, warning=FALSE, include=TRUE}
+( res2 <- cor.test(my_data$wt, my_data$mpg,  method="kendall") )
+```
+
+  * tau is the Kendall correlation coefficient.
+
+#
+    The correlation coefficient between x and y are -0.7278 and the p-value is 6.70610^{-9}.
+
+#
+  
+(@) ###Spearman rank correlation coefficient
+
+**Spearman’s rho statistic** is also used to estimate a **rank-based** measure of association.
+
+This test may be used if the data do **not** come from a **bivariate** normal distribution.
+
+```{r code10, echo=TRUE, message=FALSE, warning=FALSE, include=TRUE}
+( res2 <-cor.test(my_data$wt, my_data$mpg,  method = "spearman") )
+```
+
+  * **rho** is the **Spearman**’s **correlation coefficient**.
+  
+#
+    The correlation coefficient between x and y are -0.8864 and the p-value is 1.48810^{-11}.
+    
+#
+  
+(@) ###Interpret correlation coefficient
+
+  * Correlation coefficient is comprised between **-1** and **1**:
+
+#
+    1. -1 indicates a strong negative correlation : 
+       This means that every time x increases, y decreases (left panel figure)
+    2. 0 means that there is no association between the two variables (x and y) (middle panel figure)
+    3. 1 indicates a strong positive correlation : 
+       This means that y increases with x (right panel figure)
+       
+<!-- ![](images/1.png){width=200px}![](images/2.png){width=200px}![](images/3.png){width=200px} -->
+#
+  
+(@) ###Summary
+
+  * Use the function `cor.test(x,y)` to analyze the **correlation coefficient** between **two variables** and to get significance level of the correlation.
+  * Three possible **correlation methods** using the function `cor.test(x,y)`: **pearson**, **kendall**, **spearman**
+
+

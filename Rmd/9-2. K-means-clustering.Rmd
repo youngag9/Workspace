@@ -1,0 +1,154 @@
+---
+title: '2. Partitioning Clustering Analysis : (1) K-means Clustering'
+output: html_document
+---
+
+##K-means Clustering
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+data(wine, package = 'rattle')
+wine$Type <- factor(wine$Type, levels=c(1,2,3), labels = c('A','B','C'))
+str(wine)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(DT)
+datatable(wine)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+df <- scale(x = wine[-1])
+
+class(df)
+attr(df, 'scaled:scale')
+attr(df, 'scaled:center')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(DT)
+datatable(df)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+set.seed(1234)
+devAskNewPage(ask = TRUE)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(NbClust)
+nc <- NbClust(data = df, min.nc = 2, max.nc = 15, method = 'kmeans')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+str(nc)
+names(nc)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+nc$All.index
+nc$All.CriticalValues
+nc$Best.nc
+nc$Best.partition
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+nc$Best.nc[1, ]
+table(nc$Best.nc[1,])
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+barplot(
+  height = table(nc$Best.nc[1, ]),
+  xlab = 'Number of clusters',
+  ylab = 'Number of criteria',
+  main = 'Number of clusters chosen by 26 criteria')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+set.seed(1234)
+
+( fit.km <- kmeans(x = df, centers = 3, nstart = 25) )
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+fit.km$cluster
+fit.km$centers
+fit.km$totss
+fit.km$withinss
+fit.km$tot.withinss
+fit.km$betweenss
+fit.km$size
+fit.km$iter
+fit.km$ifault
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+aggregate(x = wine[-1], by = list(cluster = fit.km$cluster), mean)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+wine_by_cluster <- wine %>% group_by(fit.km$cluster) %>% rename( cluster = `fit.km$cluster` )
+
+library(DT)
+datatable(wine_by_cluster)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# ( ct.km <- table(fit.km$cluster, wine$Type) )
+( ct.km <- table(wine_by_cluster$cluster, wine_by_cluster$Type) )
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(flexclust)
+randIndex(ct.km)
+```
+

@@ -1,0 +1,132 @@
+---
+title: "1. Hierarchical Agglomerative Clustering"
+output: html_document
+---
+
+##위계적 응집 군집화
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(flexclust)
+data("nutrient")
+
+str(nutrient)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+sample_n(tbl = nutrient, size = 10, replace = FALSE)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( nutrient.scaled <- scale(nutrient) )
+
+class(nutrient.scaled)
+mode(nutrient.scaled)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( d <- dist(nutrient.scaled, method = 'euclidean') )
+
+class(d)
+mode(d)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit.avergage <- hclust(d = d, method = 'average') )
+
+class(fit.avergage)
+mode(fit.avergage)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+plot(fit.avergage, hang = -1, cex = .8, main = 'Average Linkage Clustering')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+devAskNewPage(ask = FALSE)
+
+library(NbClust)
+( nc <- NbClust(data = nutrient.scaled, distance = 'euclidean', min.nc = 2, max.nc = 15, method = 'average') )
+
+class(nc)
+mode(nc)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+nc$Best.nc
+nc$Best.nc[1, ]
+
+table(nc$Best.nc[1,])
+
+barplot(
+  table(nc$Best.nc[1, ]),
+  xlab = 'Number of clusters',
+  ylab = 'Number of criteria',
+  main = 'Number of clusters chosen by 26 criteria')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( clusters <- cutree(tree = fit.avergage, k = 5) )
+
+class(clusters)
+mode(clusters)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+table(clusters)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+aggregate(nutrient, by = list(cluster = clusters), median)
+aggregate(as.data.frame(nutrient.scaled), by = list(cluster = clusters), median)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+plot(fit.avergage, hang = -1, cex = .8, main = 'Average linkage clustering\n5 Cluster solution')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+plot(fit.avergage, hang = -1, cex = .8, main = 'Average linkage clustering\n5 Cluster solution')
+( rectClust <-  rect.hclust(fit.avergage, k = 5) )
+```
+
+---

@@ -1,0 +1,538 @@
+---
+title: "Regression Analysis 2"
+output: html_document
+---
+
+###Regression diagnostics
+  
+  
+####1. Data Set
+- state.x77{datasets}
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+class(state.x77)
+dim(state.x77)
+
+library(DT)
+( datatable(state.x77) )
+
+states <- as.data.frame(state.x77[ , c('Murder','Population','Illiteracy','Income','Frost')])
+
+library(dplyr)
+sample_n(tbl = states, size = 10, replace = FALSE)
+```
+
+---
+
+####2. Confidence intervals
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit <- lm(formula = Murder ~ Population + Illiteracy + Income + Frost, data = states) )
+
+confint(fit)
+```
+
+---
+
+#
+    (1) Normality
+    (2) Independence
+    (3) Linearity
+    (4) Homoscedasticity
+
+---
+
+####3. Typical Approach
+
+#####3-1. Data Set  
+  - women{datasets}
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+str(women)
+women
+```
+
+---
+
+#####3-2. 1st. Diagnostic plots with simple linear regression
+  
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit <- lm(formula = weight ~ height, data = women) )
+summary(fit)
+
+op <- par(mfrow=c(2,2))
+
+plot(fit)
+
+par(op)
+```
+
+---
+
+#####3-3. 2st. Diagnostic plots with polynomial regression
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit2 <- lm(formula = weight ~ height + I(height^2), data = women) )
+summary(fit2)
+
+op <- par(mfrow=c(2,2))
+
+plot(fit2)
+
+par(op)
+```
+
+---
+
+#####3-4. Polynomial regression removing two values
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( newfit <- lm(formula = weight ~ height + I(height^2), data = women[ -c(13, 15), ]) )
+summary(newfit)
+
+op <- par(mfrow=c(2,2))
+
+plot(newfit)
+
+par(op)
+```
+
+---
+
+####4. Basic Approach
+
+#####4-1. Data Set
+- state.x77{datasets}
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+class(state.x77)
+dim(state.x77)
+
+library(DT)
+( datatable(state.x77) )
+
+states <- as.data.frame(state.x77[ , c('Murder','Population','Illiteracy','Income','Frost')])
+
+library(dplyr)
+sample_n(tbl = states, size = 10, replace = FALSE)
+```
+
+---
+
+#####4-2. Diagnostic plots
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit <- lm(formula = Murder ~ Population + Illiteracy + Income + Frost , data = states) )
+summary(fit)
+
+op <- par(mfrow=c(2,2))
+
+plot(fit)
+
+par(op)
+```
+
+---
+
+####5. Enhanced approach
+
+#
+      1. Normality
+
+- state.x77{datasets}
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+class(state.x77)
+dim(state.x77)
+
+library(DT)
+( datatable(state.x77) )
+
+states <- as.data.frame(state.x77[ , c('Murder','Population','Illiteracy','Income','Frost')])
+
+library(dplyr)
+sample_n(tbl = states, size = 10, replace = FALSE)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fit <- lm(formula = Murder ~ Population + Illiteracy + Income + Frost , data = states) )
+summary(fit)
+
+library(car)
+qqPlot(
+  x = fit,
+  labels=row.names(states),
+  id.method='identify',
+  simulate=TRUE,
+  main='Q-Q Plot for checking nomarlity'
+)
+
+states['Nevada', ]
+fitted(fit)['Nevada']
+residuals(fit)['Nevada']
+rstudent(fit)['Nevada']
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+residplot <- function(fit, nbreaks=10) {
+  z <- rstudent(fit)
+  
+  hist(
+    z,
+    breaks = nbreaks,
+    freq = FALSE,
+    xlab = 'Studentized Residuals',
+    main = 'Distribution of Errors'
+  )
+  
+  rug(jitter(z), col = 'red')
+  
+  curve(
+    dnorm(x, mean= mean(z), sd = sd(z)),
+    add = TRUE,
+    col = 'blue',
+    lwd = 2
+  )
+  
+  lines(
+    density(z)$x,
+    density(z)$y,
+    col='red',
+    lwd=2,
+    lty=2
+  )
+  
+  legend(
+    'topright',
+    legend = c('Normal Curve', 'Kernel Density Curve'),
+    lty=2,
+    col=c('blue','red'),
+    cex=.7
+  )
+}
+
+residplot(fit)
+```
+
+---
+
+#
+      2. Independence of errors
+        - Autocorrelation
+        - Durbin-Watson Test
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(car)
+durbinWatsonTest(fit)
+```
+
+---
+
+#
+      3. Linearity
+        - Component plus residual plots (= partial residual plots)
+        - crPlots{car} function
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(car)
+crPlots(fit)
+```
+
+---
+
+#
+      4. Homoscedasticity
+        - ncvTest{car} function
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(car)
+ncvTest(fit)
+spreadLevelPlot(fit)
+```
+
+---
+
+####6. Whole validation
+  - using gvlma{gvlma} function
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(gvlma)
+( gvmodel <- gvlma(fit) )
+
+summary(gvmodel)
+```
+
+---
+
+####7. Validation of Multicollinearity
+  - VIF (Variance Inflation Factor)
+  - if $\sqrt{vif}$ > 2, there is in trouble
+  - using vif{car} function
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(car)
+vif(fit)
+
+sqrt( vif(fit) ) > 2
+```
+
+---
+
+####8. Unusual observations
+
+#####8.1 Outliers
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(car)
+outlierTest(fit)
+```
+
+---
+
+#####8.2 High-leverage points
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+hat.plot <- function(fit) {
+  p <- length( coefficients(fit) )
+  n <- length( fitted(fit) )
+  
+  plot( hatvalues(fit), main = 'Index plot of Hat Values')
+  abline(h = c(2,3)*p/n, col='red', lty=2)
+  identify(1:n, hatvalues(fit), names( hatvalues(fit) ))
+}
+
+hat.plot(fit)
+```
+
+---
+
+#####8-3. Influential observations
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+cutoff <- 4/(nrow(states)-length(fit$coefficients)-2)
+cat('cutoff : ', cutoff)
+
+plot(fit, which = 4, cook.levels = cutoff)
+abline(h = cutoff, lty = 2, col = 'red')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(car)
+avPlots(model = fit, ask = FALSE, id.method = 'identify')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(car)
+influencePlot(
+  model = fit,
+  id.method = 'identify',
+  main = 'Influence Plot',
+  sub = 'Circle size is proportional to Cook\'s distance')
+```
+
+---
+
+####9. Correction of observations
+
+#
+    1. Deletion of observations
+    2. Transformation of variables
+    3. Adjustment of variables
+    4. Use other regression analyses
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(car)
+summary( powerTransform(states$Murder) )
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(car)
+boxTidwell(Murder ~ Population + Illiteracy, data = states)
+```
+
+---
+
+####10. Choice of 'best' regression model
+
+#####10.1 Nest model
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+states <- as.data.frame(
+            state.x77[ , c('Murder','Population','Illiteracy','Income','Frost')]
+          )
+
+( fit1 <- lm(Murder ~ Population + Illiteracy + Income + Frost, data = states) )
+( fit2 <- lm(Murder ~ Population + Illiteracy, data = states) )
+
+anova(fit1, fit2)
+```
+
+---
+
+#####10.2 AIC model
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+states <- as.data.frame(
+            state.x77[ , c('Murder','Population','Illiteracy','Income','Frost')]
+          )
+
+( fit1 <- lm(Murder ~ Population + Illiteracy + Income + Frost, data = states) )
+( fit2 <- lm(Murder ~ Population + Illiteracy, data = states) )
+
+AIC(fit1, fit2)
+```
+
+---
+
+####11. Choice of variables
+
+#####11.1 Stepwise regression
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+states <- as.data.frame(
+            state.x77[ , c('Murder','Population','Illiteracy','Income','Frost')]
+          )
+
+( fit <- lm(Murder ~ Population + Illiteracy + Income + Frost, data = states) )
+
+library(MASS)
+stepAIC(fit, direction = 'backward')
+```
+
+---
+
+#####11.2 All subjects regression
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+states <- as.data.frame(
+            state.x77[ , c('Murder','Population','Illiteracy','Income','Frost')]
+          )
+
+library(leaps)
+( regss <- regsubsets(Murder ~ Population + Illiteracy + Income + Frost, data = states,  nbest=4) )
+
+plot(regss, scale = 'adjr2')
+
+library(car)
+subsets(regss, main = 'Cp Plot for All Subsets Regression', statistic = 'cp', legend = c(1,2))
+abline(1, 1, lty = 2, col = 'red')
+```
+
+---
+
+####12. More ..
+
+#####12.1 K-fold cross validation
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+shrinkage <- function(fit, k = 10) {
+  require(bootstrap)
+  
+  theta.fit <- function(x, y) { lsfit(x, y) }
+  theta.predict <- function(fit, x) { cbind(1, x) %*% fit$coefficients }
+  
+  x <- fit$model[ , 2:ncol(fit$model)]
+  y <- fit$model[ , 1]
+  
+  results <- crossval(x, y, theta.fit, theta.predict, ngroup = k)
+  
+  r2 <- cor(y, fit$fitted.values)^2
+  r2cv <- cor(y, results$cv.fit)^2
+  
+  cat('1. Original R-square: ', r2, '\n')
+  cat('2.', k, 'fold cross validation R-square: ', r2cv, '\n')
+  cat('3. Change = ', r2-r2cv, '\n')
+}
+
+states <- as.data.frame(
+            state.x77[ , c('Murder','Population','Illiteracy','Income','Frost')]
+          )
+
+fit <- lm(Murder ~ Population + Illiteracy + Income + Frost, data = states)
+
+shrinkage(fit)
+```
+
+---
+
+#####12.2 Relative importance
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+states <- as.data.frame(
+            state.x77[ , c('Murder','Population','Illiteracy','Income','Frost')]
+          )
+zstates <- as.data.frame(scale(states))
+zfit <- lm(Murder ~ Population + Illiteracy + Income + Frost, data = zstates)
+
+coef(zfit)
+```
+
+---
+
+#####12.3 Relative weights
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+relweights <- function(fit, ...) {
+  R <- cor(fit$model)
+  nvar <- ncol(R)
+  rxx <- R[2:nvar, 2:nvar]
+  rxy <- R[2:nvar, 1]
+  svd <- eigen(rxx)
+  evec <- svd$vectors
+  ev <- svd$values
+  delta <- diag(sqrt(ev))
+  lambda <- evec %*% delta %*% t(evec)
+  lambdasq <- lambda ^ 2
+  beta <- solve(lambda) %*% rxy
+  rsquare <- colSums(beta ^ 2)
+  rawwgt <- lambdasq %*% beta ^ 2
+  import <- (rawwgt / rsquare) * 100
+  import <- as.data.frame(import)
+  row.names(import) <- names(fit$model[2:nvar])
+  names(import) <- 'Weights'
+  import <- import[order(import), 1, drop = FALSE]
+  dotchart(import$Weights, labels = row.names(import))
+}
+
+states <- as.data.frame(
+            state.x77[ , c('Murder','Population','Illiteracy','Income','Frost')]
+          )
+
+fit <- lm(Murder ~ Population + Illiteracy + Income + Frost, data = states)
+relweights(fit, col = 'blue')
+```
+

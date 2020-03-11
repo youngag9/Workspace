@@ -1,0 +1,135 @@
+---
+title: 'PCA : Principal Component Analysis'
+output: html_document
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+data("USJudgeRatings")
+str(USJudgeRatings)
+
+library(DT)
+datatable(USJudgeRatings)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(psych)
+fa.parallel(
+  USJudgeRatings[, -1],
+  fa = 'pc',
+  n.iter = 100,
+  show.legend = TRUE,
+  main = 'Scree plot with parallel analysis')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(psych)
+( pc <- principal(USJudgeRatings[,-1], nfactors = 1) )
+
+class(pc)
+mode(pc)
+names(pc)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+data("Harman23.cor")
+str(Harman23.cor)
+class(Harman23.cor$cov)
+
+library(DT)
+datatable(as.data.frame(Harman23.cor$cov))
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(psych)
+fa.parallel(
+  Harman23.cor$cov,
+  n.obs = 302,
+  fa = 'pc',
+  n.iter = 100,
+  show.legend = FALSE,
+  main = 'Scree plot with parallel anlysis')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(psych)
+( pc <- principal(Harman23.cor$cov, nfactors = 2, rotate = 'none') )
+
+class(pc)
+mode(pc)
+names(pc)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(psych)
+( rc <- principal(Harman23.cor$cov, nfactors = 2, rotate = 'varimax'))
+
+class(rc)
+mode(rc)
+names(rc)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(psych)
+( pc <- principal(USJudgeRatings[,-1], nfactors = 1, scores = TRUE) )
+
+class(pc)
+mode(pc)
+names(pc)
+
+pc$scores
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+cor(USJudgeRatings$CONT, pc$score)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(psych)
+( rc <- principal(Harman23.cor$cov, nfactors = 2, rotate = 'varimax') )
+
+class(rc)
+mode(rc)
+names(rc)
+
+round( unclass(rc$weights), 2 )
+```
+
+#
+    PC1 = 0.28 * height + 0.30 * arm.span + 0.30 * forearm + 
+          0.29 * lower.leg - 0.06 * weight - 0.08 * bitro.diameter - 
+          0.10 * chest.girth - 0.04 * chest.width
+
+#
+    PC2 = -0.05 * height - 0.08 * arm.span - 0.09 * forearm - 
+          0.06 * lower.leg + 0.33 * weight + 0.32 * bitro.diameter + 
+          0.34 * chest.girth + 0.27 * chest.width
+
+---

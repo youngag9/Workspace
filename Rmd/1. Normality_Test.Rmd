@@ -1,0 +1,80 @@
+---
+title: "Normality Test"
+author: "YOSEPH"
+date: "2018년 11월 26일"
+output: html_document
+---
+
+```{r code1, message=FALSE, warning=FALSE, include=TRUE, echo=TRUE}
+
+data(ToothGrowth)
+my_data <- ToothGrowth
+  
+set.seed(1234)
+
+require(dplyr)
+sample_n(my_data, size = 10, replace = FALSE)   # random sampling
+
+```
+
+1. If the sample size is large enough (n > 30), we can ignore the distribution of the data and use parametric tests.
+
+2. The central limit theorem tells us that no matter what distribution things have, the sampling distribution tends to be normal if the sample is large enough (n > 30).
+
+3. However, to be consistent, normality can be checked by visual inspection [normal plots (histogram), Q-Q plot (quantile-quantile plot)] or by significance tests.
+
+4. Density plot and Q-Q plot can be used to check normality visually.
+
+```{r density plot, echo=TRUE, include=TRUE, warning=FALSE, message=FALSE}
+
+require(ggpubr)
+ggdensity(my_data$len, 
+          add = 'mean', 
+          color = 'red', 
+          fill = 'lightblue', 
+          alpha = .5, 
+          title = 'Density plot of Tooth Length', 
+          xlab = 'Tooth length')
+
+```
+
+5. Q-Q plot (or quantile-quantile plot) draws the correlation between a given sample and the normal distribution. A 45-degree reference line is also plotted.
+
+```{r q-q plot, echo=TRUE, include=TRUE, warning=FALSE, message=FALSE}
+
+require(ggpubr)
+ggqqplot(my_data$len, color = 'red')
+
+```
+
+6. It’s also possible to use the function qqPlot() [in car package]:
+
+```{r qqPlot{car}, echo=TRUE, include=TRUE, warning=FALSE, message=FALSE}
+
+# install.packages('car')
+
+require(car)
+car::qqPlot(my_data$len)
+  
+stats::qqnorm(my_data$len)
+stats::qqline(my_data$len, col = 2)
+
+```
+
+7. There are several methods for normality test such as Kolmogorov-Smirnov (K-S) normality test and Shapiro-Wilk’s test.
+
+8. The null hypothesis of these tests is that “sample distribution is normal”. If the test is significant, the distribution is non-normal.
+
+9. Shapiro-Wilk’s method is widely recommended for normality test and it provides better power than K-S.
+
+10. It is based on the correlation between the data and the corresponding normal scores.
+
+11. Note that, normality test is sensitive to sample size. Small samples most often pass normality tests. Therefore, it’s important to combine visual inspection and significant test in order to take the right decision.
+
+12. The R function shapiro.test() can be used to perform the Shapiro-Wilk test of normality for one variable (univariate):
+
+```{r normality test, echo=TRUE, include=TRUE, warning=FALSE, message=TRUE}
+
+stats::shapiro.test(my_data$len)
+
+```

@@ -1,0 +1,344 @@
+---
+title: "Regression Analysis 3"
+output: html_document
+---
+
+###Nonlinear Regression Essentials : Polynomial and Spline Regression Models
+
+In some cases, the true relationship between the outcome and a predictor variable might not be linear.
+
+There are different solutions extending the linear regression model for capturing these nonlinear effects, including:
+
+  - **Polynomial regression**  
+    This is the simple approach to model non-linear relationships. It add polynomial terms or quadratic terms (square, cubes, etc) to a regression.
+
+  - **Spline regression**  
+    Fits a smooth curve with a series of polynomial segments. The values delimiting the spline segments are called Knots.
+
+  - **Generalized additive models (GAM)**  
+    Fits spline models with automated selection of knots.
+
+you’ll learn how to compute non-linear regression models and how to compare the different models in order to choose the one that fits the best your data.
+
+The **RMSE and the R2 metrics**, will be used to compare the different models.
+
+Recall that,  
+
+  - the **RMSE** represents the model prediction error, that is the average difference the observed outcome values and the predicted outcome values. 
+  
+  - The **R2** represents the squared correlation between the observed and predicted outcome values. The best model is the model with the lowest RMSE and the highest R2.
+
+---
+
+####1. Loading Required R packages
+
+  - `{tidyverse}` for easy data manipulation and visualization
+  - `{caret}` for easy machine learning workflow
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+library(caret)
+
+theme_set(theme_classic())
+```
+
+---  
+
+####2. Preparing the data
+
+We’ll use the `Boston{MASS}` data set for predicting the median house value (**mdev**), in Boston Suburbs, based on the predictor variable lstat (percentage of lower status of the population).
+
+We’ll randomly **split** the data into **training set** (**80%** for building a predictive model) and **test set** (**20%** for evaluating the model). Make sure to set seed for **reproducibility**.
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(MASS)
+
+# Load the data
+data("Boston")
+```
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(DT)
+datatable(Boston)
+```
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(caret)
+
+# Split the data into training and test set
+set.seed(123)
+training.samples <- Boston$medv %>% createDataPartition(p = 0.8, list = FALSE)
+
+train.data  <- Boston[training.samples, ]
+test.data <- Boston[-training.samples, ]
+
+library(dplyr)
+sample_n(tbl = as.data.frame(training.samples), size = 10, replace = FALSE)
+
+dim(Boston)
+dim(train.data)
+dim(test.data)
+```
+
+---
+
+First, visualize the scatter plot of the **medv** vs **lstat** variables as follow:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+ggplot(train.data, aes(lstat, medv) ) +
+  geom_point() +
+  stat_smooth()
+```
+
+The above scatter plot suggests a **non-linear relationship** between the two variables
+
+---
+
+#
+    We start by computing linear and non-linear regression models.
+    Next, we’ll compare the different models in order to choose the best one for our data.
+
+---
+
+####3. Linear regression
+
+The standard linear regression model equation can be written as `medv = b0 + b1*lstat`.
+
+Compute linear regression model:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# 1. Build the model
+( model <- lm(medv ~ lstat, data = train.data) )
+summary(model)
+
+# 2. Make predictions
+( predictions <- model %>% predict(test.data) )
+
+# 3. Model performance
+data.frame(
+  RMSE = RMSE(predictions, test.data$medv),
+  R2 = R2(predictions, test.data$medv)
+)
+```
+
+---
+
+Visualize the data:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+ggplot(train.data, aes(lstat, medv) ) +
+  geom_point() +
+  stat_smooth(method = lm, formula = y ~ x)
+```
+
+---
+
+####4. Polynomial regression
+
+The polynomial regression adds polynomial or quadratic terms to the regression equation as follow:
+
+  - `medv=b0 + b1∗lstat + b2∗lstat2`
+
+---
+
+In R, to create a predictor **x^2** you should use the function **I{base}**, as follow: `I(x^2)`. This raise x to the power 2.
+
+The polynomial regression can be computed in R as follow:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+lm(medv ~ lstat + I(lstat^2), data = train.data)
+```
+
+---
+
+An alternative simple solution is to use this:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+lm(medv ~ poly(lstat, 2, raw = TRUE), data = train.data)
+```
+
+---
+
+The output contains two coefficients associated with lstat : one for the linear term (**lstat^1**) and one for the quadratic term (**lstat^2**).
+
+The following example computes a **sixfth-order** polynomial fit:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+lm(medv ~ poly(lstat, 6, raw = TRUE), data = train.data) %>% summary()
+```
+
+From the output above, it can be seen that polynomial terms beyond the fith order are not significant. 
+
+---
+
+So, just create a fith polynomial regression model as follow:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# 1. Build the model
+( model <- lm(medv ~ poly(lstat, 5, raw = TRUE), data = train.data) )
+summary(model)
+
+# 2. Make predictions
+( predictions <- model %>% predict(test.data) )
+
+# 3. Model performance
+data.frame(
+  RMSE = RMSE(predictions, test.data$medv),
+  R2 = R2(predictions, test.data$medv)
+)
+```
+
+---
+
+Visualize the fith polynomial regression line as follow:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+ggplot(train.data, aes(lstat, medv) ) +
+  geom_point() +
+  stat_smooth(method = lm, formula = y ~ poly(x, 5, raw = TRUE))
+```
+
+---
+
+###5. Log transformation
+
+When you have a non-linear relationship, you can also try a logarithm transformation of the predictor variables:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# 1. Build the model
+( model <- lm(medv ~ log(lstat), data = train.data) )
+summary(model)
+
+# 2. Make predictions
+( predictions <- model %>% predict(test.data) )
+
+# 3. Model performance
+data.frame(
+  RMSE = RMSE(predictions, test.data$medv),
+  R2 = R2(predictions, test.data$medv)
+)
+```
+
+---
+
+Visualize the data:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+ggplot(train.data, aes(lstat, medv) ) +
+  geom_point() +
+  stat_smooth(method = lm, formula = y ~ log(x))
+```
+
+---
+
+###6. Spline regression
+
+Polynomial regression only captures a certain amount of curvature in a nonlinear relationship. An alternative, and often superior, approach to modeling nonlinear relationships is to use splines (P. Bruce and Bruce 2017).
+
+Splines provide a way to smoothly interpolate between fixed points, called knots. Polynomial regression is computed between knots. In other words, splines are series of polynomial segments strung together, joining at knots (P. Bruce and Bruce 2017).
+
+The R package splines includes the function bs for creating a b-spline term in a regression model.
+
+You need to specify two parameters:  
+    - the degree of the polynomial  
+    - the location of the knots
+
+In our example, we’ll place the knots at the lower quartile, the median quartile, and the upper quartile:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( knots <- quantile(train.data$lstat, p = c(0.25, 0.5, 0.75)) )
+```
+---
+
+We’ll create a model using a cubic spline (degree = 3):
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(splines)
+
+# 1. Build the model
+knots <- quantile(train.data$lstat, p = c(0.25, 0.5, 0.75))
+model <- lm (medv ~ bs(lstat, knots = knots), data = train.data)
+
+# 2. Make predictions
+predictions <- model %>% predict(test.data)
+
+# 3. Model performance
+data.frame(
+  RMSE = RMSE(predictions, test.data$medv),
+  R2 = R2(predictions, test.data$medv)
+)
+```
+
+#
+    Note that, the coefficients for a spline term are not interpretable.
+
+---
+
+Visualize the cubic spline as follow:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+ggplot(train.data, aes(lstat, medv) ) +
+  geom_point() +
+  stat_smooth(method = lm, formula = y ~ splines::bs(x, df = 3))
+```
+
+---
+
+###7. Generalized additive models (GAM)
+
+Once you have detected a non-linear relationship in your data, the polynomial terms may not be flexible enough to capture the relationship, and spline terms require specifying the knots.
+
+Generalized additive models, or GAM, are a technique to automatically fit a spline regression. This can be done using the {mgcv} package:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(mgcv)
+
+# 1. Build the model
+model <- gam(medv ~ s(lstat), data = train.data)
+
+# 2. Make predictions
+predictions <- model %>% predict(test.data)
+
+# 3. Model performance
+data.frame(
+  RMSE = RMSE(predictions, test.data$medv),
+  R2 = R2(predictions, test.data$medv)
+)
+```
+
+---
+
+The term s(lstat) tells the gam() function to find the “best” knots for a spline term.
+
+Visualize the data:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+ggplot(train.data, aes(lstat, medv) ) +
+  geom_point() +
+  stat_smooth(method = gam, formula = y ~ s(x))
+```
+
+---
+
+###8. Comparing the models
+
+From analyzing the **RMSE** and the **R2** metrics of the different models, it can be seen that the **polynomial** regression, the **spline** regression and the **generalized additive models** outperform the **linear** regression model and the **log transformation** approaches.

@@ -1,0 +1,42 @@
+---
+title: "ex14_markdown"
+author: 'Y'
+date: '2020 2 20 '
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+
+*특수문자*
+
+**특수문자**
+
+~~특수문자~~
+
+[NAVER](http://www.naver.com)
+
+# **TITLE 1**
+## TITLE 2
+### TITLE 3
+#### TITLE 4
+
+```{r chunk 1}
+str(ggplot2::mpg)
+```
+
+```{r}
+summary(ggplot2::mpg)
+```
+
+```{r}
+summary(cars)
+library(ggplot2)
+qplot(data = mpg, x = drv, fill = drv)
+```
+
+```{r}
+tinytex::install_tinytex()
+```
+

@@ -1,0 +1,324 @@
+---
+title: "5-2. Correlation Matrix"
+output: html_document
+---
+
+## Correlation matrix : to analyze, format and visualize a correlation matrix
+
+#
+    There are different methods for correlation analysis : 
+    1. Pearson correlation test (parametric)
+    2. Spearman rank-based correlation analysis (non-parametric)
+    3. Kendall rank-based correlation analysis (non-parametric)
+
+
+(@) ###What is correlation matrix?
+
+#
+    A correlation matrix, which is used to investigate the dependence between multiple variables at the same time. 
+    The result is a table containing the correlation coefficients between each variable and the others
+    
+    
+(@) ###Compute correlation matrix
+
++ ####R functions
+
+    - The R function `cor{stats}` can be used to compute a correlation matrix. 
+    - A simplified format of the function is :
+
+```{r code1, eval=FALSE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+cor(x, method = c("pearson", "kendall", "spearman"))
+```
+#
+    1. x      : numeric matrix or a data frame.
+    2. method : indicates the correlation coefficient to be computed. 
+    3. The default is pearson correlation coefficient which measures the linear dependence between two variables. 
+    4. kendall and spearman correlation methods are non-parametric rank-based correlation test.
+    
++ ####Missing Values (NA)
+
+    - If data contain missing values, 
+      use the following R code to handle missing values by case-wise deletion.
+
+```{r code2, eval=FALSE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+cor(x, method = "pearson", use = "complete.obs")
+```
+
+(@) ###Import your data into R
+
+Here, we’ll use a data derived from the built-in R data set `mtcars{datasets}` as an example:
+
+```{r code3, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+# Load data
+data("mtcars")
+
+# select the next columns in a mtcars data set:
+#   mpg, disp, hp, drat, wt, qsec
+my_data <- mtcars[, c(1,3,4,5,6,7)]
+
+# print the random sampling observations using sample_n{dplyr}
+library(dplyr, quietly = TRUE)
+rsd <- sample_n(tbl = my_data, size = 10, replace = FALSE)
+
+library(knitr)
+kable(x = rsd, caption = 'A random sampling data of a my_data')
+```
+
+(@) ###Compute correlation matrix
+
+In the following table, correlations coefficients between the possible pairs of variables are shown.
+
+#
+    *Note* if data contain missing values, 
+           use the following R code to handle missing values by case-wise deletion.
+    
+    cor(my_data, use = "complete.obs")
+    
+#
+    *Note* Unfortunately, 
+           the function `cor{stats}` returns only the correlation coefficients between variables. 
+           In the next section, we will use Hmisc R package to calculate the correlation p-values.
+
+```{r ode4, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+( res <- cor(my_data) )
+round(res, 2)
+```
+
+(@) ###Correlation matrix with significance levels (p-value)
+
+The function `rcorr{Hmisc}` can be used to compute the significance levels for pearson and spearman correlations.  
+It returns both the correlation coefficients and the p-value of the correlation for all possible pairs of columns in the data table.
+
++ Simplified format:
+
+#
+    rcorr(x, type = c("pearson", "spearman"))
+    
+    1. x should be a matrix. 
+    2. The correlation type can be either pearson or spearman.
+    
++ Install `{Hmisc}` package:
+```{r code4, eval=FALSE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+install.packages("Hmisc")
+```
+
++ Use `rcorr{Hmisc}` function:
+```{r code5, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+library("Hmisc")
+
+( res2 <- rcorr(as.matrix(my_data), type='pearson') )
+```
+
+#
+    The output of the function `rcorr{Hmisc}` is a list containing the following elements : 
+      - r : the correlation matrix 
+      - n : the matrix of the number of observations used in analyzing each pair of variables 
+      - P : the p-values corresponding to the significance levels of correlations.
+
+If you want to extract the p-values or the correlation coefficients from the output, use this:
+```{r code6, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+# Extract the correlation coefficients
+res2$r
+
+# Extract p-values
+res2$P
+```
+
+(@) ###A simple function to format the correlation matrix
+
+#
+    This section provides a simple function for formatting a correlation matrix 
+    into a table with 4 columns containing :
+
+      - Column 1 : row names (variable 1 for the correlation test)
+      - Column 2 : column names (variable 2 for the correlation test)
+      - Column 3 : the correlation coefficients
+      - Column 4 : the p-values of the correlations
+      
+The custom function below can be used :
+```{r code7, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+# ++++++++++++++++++++++++++++
+# flattenCorrMatrix
+# ++++++++++++++++++++++++++++
+# cormat : matrix of the correlation coefficients
+# pmat : matrix of the correlation p-values
+
+flattenCorrMatrix <- function(cormat, pmat) {
+  # upper.tri{base} : Lower and Upper Triangular Part of a Matrix
+  #   - return class : matrix
+  #   - including logical values in all each cell of the returned matrix
+  ( ut <- upper.tri(cormat) )
+  
+  # create a data frame
+  #   - row{base} : Row Indexes
+  #   - col{base} : Column Indexes
+  #   - rownames{base} : Row Names
+  #   - colnames{base} : Column Names
+  data.frame(
+      row = rownames(cormat)[row(cormat)[ut]],
+      column = rownames(cormat)[col(cormat)[ut]],
+      cor  =(cormat)[ut],
+      p = pmat[ut]
+  )
+} # flattenCorrMatrix
+```
+
+Example of usage :
+```{r code8, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+library(Hmisc, quietly = TRUE)
+
+res2 <- rcorr( as.matrix( mtcars[ ,1:7] ) )
+flattenCorrMatrix(res2$r, res2$P)
+```
+
+(@) ###Visualize correlation matrix
+
+There are different ways for visualizing a correlation matrix :
+
++ `symnum{stats}` function : Symbolic Number Coding
+    - Symbolically encode a given numeric or logical vector or array.
+    - Particularly useful for visualization of structured matrices,
+        - e.g., correlation, sparse, or logical ones.
++ `corrplot{corrplot}` function : A visualization of a correlation matrix
+    - to plot a correlogram
++ scatter plots
++ heatmap
+
+(@) ###Use `symnum{stats}` function: Symbolic number coding
+
+The R function `symnum{stats}` replaces correlation coefficients by symbols according to the level of the correlation. 
+
+It takes the correlation matrix as an argument :
+
++ Simplified format:
+```{r code9, eval=FALSE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+symnum(
+    x,
+    cutpoints = c(0.3, 0.6, 0.8, 0.9, 0.95),
+    symbols = c(" ", ".", ",", "+", "*", "B"),
+    abbr.colnames = TRUE
+)
+```
+
+#
+    1. x              : the correlation matrix to visualize
+    2. cutpoints      : correlation coefficient cutpoints
+       The correlation coefficients between 0 and 0.3 are replaced by a space (" “),
+       correlation coefficients between 0.3 and 0.6 are replace by ”.“, etc …
+    3. symbols        : the symbols to use
+    4. abbr.colnames  : logical value
+                        If TRUE, colnames are abbreviated
+                        
++ Example of usage:
+```{r code10, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=TRUE}
+# res : correlation matrix
+symnum(res, abbr.colnames = FALSE)
+```
+
+#
+    As indicated in the legend, 
+      the correlation coefficients between 0 and 0.3 are replaced by a space (" “); 
+      correlation coefficients between 0.3 and 0.6 are replace by”.“; 
+      etc …
+
+(@) ###Use `corrplot{corrplot}` function: Draw a correlogram
+
+The function `corrplot{corrplot}`, in the package of the same name, creates a graphical display of a correlation matrix, highlighting the most correlated variables in a data table.
+
+In this plot, correlation coefficients are colored according to the value. 
+Correlation matrix can be also reordered according to the degree of association between variables.
+
++ Install corrplot:
+```{r code11, eval=FALSE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+install.packages("corrplot", quiet = TRUE)
+```
+
++ Use `corrplot{corrplot}` to create a correlogram:
+
+The function `corrplot{corrplot}` takes the correlation matrix as the first argument.  
+The second argument ( `type=“upper”` ) is used to display only the upper triangular of the correlation matrix.
+
+```{r code12, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+library(corrplot)
+
+# corrplot{corrplot} : A visualization of a correlation matrix.
+#   res : correlation matrix
+#   type : type of matrix to plot, c('full', 'lower', 'upper')
+#   tl.col : text label color
+#   tl.srt : text label string rotation in degrees
+corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45)
+```
+
+#
+    The correlation matrix is reordered according to the correlation coefficient using “hclust” method.
+      - tl.col (for text label color) and tl.srt (for text label string rotation) are used to change 
+        text colors and rotations
+      - Possible values for the argument type are : “upper”, “lower”, “full”
+
+#
+    1. Positive correlations are displayed in blue and negative correlations in red color. 
+    2. Color intensity and the size of the circle are proportional to the correlation coefficients. 
+    3. In the right side of the correlogram, 
+       the legend color shows the correlation coefficients and the corresponding colors.
+
+It’s also possible to combine correlogram with the significance test. 
+
+We’ll use the result `res.cor2` generated in the previous section with `rcorr{Hmisc}` function :
+
+#
+    In the following plot, correlations with p-value > 0.01 or p-value > 0.05 are considered as insignificant. 
+    In this case the correlation coefficient values are leaved blank or crosses are added.
+
+```{r code13, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+# Insignificant correlation are crossed
+corrplot(res2$r, type="upper", order="hclust", p.mat = res2$P, sig.level = 0.01, insig = "blank")
+
+# Insignificant correlations are leaved blank
+corrplot(res2$r, type="lower", order="hclust", p.mat = res2$P, sig.level = 0.05, insig = "blank")
+```
+
+
+(@) ###Use `chart.Correlation{PerformanceAnalytics}` : Draw scatter plots
+
+The function `chart.Correlation{PerformanceAnalytics}`, can be used to display a chart of a correlation matrix.
+
++ Install PerformanceAnalytics :
+```{r code14, eval=FALSE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+install.packages("PerformanceAnalytics", quiet = TRUE)
+```
+
++ Use `chart.Correlation{PerformanceAnalytics}` :
+```{r code15, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+library("PerformanceAnalytics", quietly = TRUE)
+
+my_data <- mtcars[, c(1,3,4,5,6,7)]
+chart.Correlation(my_data, histogram=TRUE, pch=19)
+```
+
+#
+    In the above plot:
+
+    The distribution of each variable is shown on the diagonal.
+    On the bottom of the diagonal : the bivariate scatter plots with a fitted line are displayed
+    On the top of the diagonal    : the value of the correlation plus the significance level as stars
+    Each significance level is associated to a symbol : p-values(0, 0.001, 0.01, 0.05, 0.1, 1) <=> symbols(“***”, “**”, “*”, “.”, " “)
+    
+(@) ###Use `heatmap{stats}`
+```{r code16, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+# Get some colors
+
+# colorRampPalette{grDevices} : Color interpolation
+#   These functions return functions that interpolate a set of given colors to create new color palettes (like topo.colors) and color ramps, functions that map the interval [0, 1] to colors
+col<- colorRampPalette( c("blue", "white", "red") )(20)
+
+# heatmap{stats} : draw a Heat Map
+#   - symm : logical indicating if x should be treated symmetrically; 
+#            can only be true when x is a square matrix.
+heatmap(x = res, col = col, symm = TRUE)
+```
+
+#
+    - x     : the correlation matrix to be plotted
+    - col   : color palettes
+    - symm  : logical indicating if x should be treated symmetrically; 
+              can only be true when x is a square matrix.

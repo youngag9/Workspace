@@ -1,0 +1,87 @@
+---
+title: '2. Partitioning Clustering Analysis : (2) PAM ( Partition Around Medoids )'
+output: html_document
+---
+
+##Partition Around Medoids, PAM
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(rattle)
+data(wine)
+
+wine$Type <- factor(wine$Type, levels=c(1,2,3), labels = c('A','B','C'))
+str(wine)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(DT)
+datatable(wine)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+set.seed(1234)
+
+library(cluster)
+( fit.pam <- pam(wine[-1], k = 3, stand = TRUE) )
+
+class(fit.pam)
+mode(fit.pam)
+
+names(fit.pam)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+fit.pam$medoids
+fit.pam$id.med
+fit.pam$clustering
+fit.pam$objective
+fit.pam$isolation
+fit.pam$clusinfo
+fit.pam$silinfo
+fit.pam$diss
+fit.pam$call
+fit.pam$data
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+attr(fit.pam$data, 'scaled:scale')
+attr(fit.pam$data, 'scaled:center')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(cluster)
+clusplot(x = fit.pam, main = 'Bivariate Cluster Plot')
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( ct.pam <- table(fit.pam$cluster, wine$Type) )
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(flexclust)
+randIndex(ct.pam)
+```

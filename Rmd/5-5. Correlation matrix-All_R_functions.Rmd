@@ -1,0 +1,137 @@
+---
+title: '5-5. Correlation matrix : An R function to do all you need'
+output: html_document
+---
+
+Correlation matrix analysis is very useful to study dependences or associations between variables.  
+This article provides a custom R function, `rquery.cormat()`, for calculating and visualizing easily acorrelation matrix.  
+
+The result is a list containing, the correlation coefficient tables and the p-values of the correlations.  
+In the result, the variables are reordered according to the level of the correlation which can help to quickly identify the most associated variables.  
+
+A graph is also generated to visualize the correlation matrix using a correlogram or a heatmap.
+
+(@) ###Prerequisites
+
++ The `rquery.cormat()` function requires the installation of `{corrplot}` package. 
++ Before proceeding, install it using he following R code :
+
+```{r code1, eval=FALSE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+install.packages("corrplot")
+```
+
++ To use the `rquery.cormat()` function, you can source it as follow :
+```{r code2, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+source("scripts/rquery_cormat.r")
+```
+
++ A simplified format of the function is :
+```{r code1_1, eval=FALSE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+rquery.cormat(
+              x,
+              type=c('lower', 'upper', 'full', 'flatten'),
+              graph=TRUE,
+              graphType=c("correlogram", "heatmap"),
+              col=NULL,
+              ...
+        )
+```
+
+#
+    Description of the arguments:
+
+      (1) x         : matrix of data values
+      (2) type      : Possible values are “lower” (default), “upper”, “full” or “flatten”. 
+                      It displays the lower or upper triangular of the matrix, full or flatten matrix.
+      (3) graph     : if TRUE,
+                      a correlogram or heatmap is generated to visualize the correlation matrix.
+      (4) graphType : Type of graphs. 
+                      Possible values are “correlogram” or “heatmap”.
+      (5) col       : colors to use for the correlogram or the heatmap.
+      (6) …         : Further arguments to be passed to cor() or cor.test() function.
+
+(@) ###Example of data
+
++ The `mtcars{datasets}` data is used in the following examples :
+```{r code3, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+mydata <- mtcars[, c(1,3,4,5,6,7)]
+
+library(dplyr, quietly = TRUE)
+sample_n(tbl = mydata, size = 10, replace = FALSE)
+```
+
+
+(@) ###Computing the correlation matrix
+
+```{r code4, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+rquery.cormat(mydata)
+```
+
+#
+    The result of rquery.cormat() function is a list containing the following components :
+      - r   : The table of correlation coefficients
+      - p   : Table of p-values corresponding to the significance levels of the correlations
+      - sym : A representation of the correlation matrix in which coefficients are replaced by symbols
+              according to the strength of the dependence.
+
+    In the generated graph,
+        negative correlations are in blue and positive ones in red color.
+
+(@) ###Upper triangle of the correlation matrix
+
+#
+    Note that in the result above, 
+        only the lower triangle of the correlation matrix is shown by default. 
+    
+    You can use the following R script to get the upper triangle or the full correlation matrix.
+    
+```{r code5, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+rquery.cormat(mydata, type="upper")
+```
+
+
+(@) ###Full correlation matrix
+
+```{r code6, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+rquery.cormat(mydata, type="full")
+```
+
+
+(@) ###Change the colors of the correlogram
+
+```{r code7, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+col <- colorRampPalette(c("blue", "white", "red"))(20)
+cormat <- rquery.cormat(mydata, type="full", col=col)
+```
+
+
+(@) ###Draw a heatmap
+
+```{r code8, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+cormat<-rquery.cormat(mydata, graphType="heatmap")
+```
+
++ To calculate the correlation matrix without plotting the graph, 
+  you can use the following R script :
+  
+```{r code9, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+rquery.cormat(mydata, graph=FALSE)
+```
+
+
+(@) ###Format the correlation table
+
+  + The R code below can be used to format the correlation matrix into a table of four columns containing :
+      - The names of rows/columns
+      - The correlation coefficients
+      - The p-values
+  
+  + For this end, use the argument : type=“flatten”  
+  
+```{r code10, eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+rquery.cormat(mydata, type="flatten", graph=FALSE)
+```
+  
+
+(@) ###Description of rquery.cormat function
+

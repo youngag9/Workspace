@@ -1,0 +1,169 @@
+---
+title: "Regression Analysis 4"
+output: html_document
+---
+
+##■ Model Predictions, Confidence Intervals and Prediction Intervals
+
+The **main goal** of **linear regression** is to **predict** an outcome value on the basis of one or multiple **predictor variables**.
+---
+
+---
+
++ We’ll describe **how to predict** outcome for **new** observations data.  
++ You will also learn how to display the **confidence intervals** and the **prediction intervals**.
+
+---
+
+###1. Build a linear regression
+
+We start by building a simple linear regression model that **predicts** the **stopping distances** of cars on the basis of the **speed**.
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+data(cars)
+
+str(cars)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(dplyr)
+sample_n(tbl = cars, size = 5, replace = FALSE)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+ggplot(cars, aes(speed, dist) ) + geom_point() + stat_smooth()
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# 1. Build the model
+( model <- lm(dist ~ speed, data = cars) )
+
+# 2. interpret the model
+summary(model)
+```
+
+The **linear model equation** can be written as follow: **`dist = -17.579 + 3.932*speed`**.
+
+#
+    Note that, the units of the variable speed and dist are respectively, mph and ft.
+
+---
+
+###2. Prediction for new data set
+
+Using the above model, we can **predict** the **stopping distance** for a **new speed** value.
+
+Start by creating **a new data frame** containing, for example, **three new speed values** :
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( new.speeds <- data.frame(
+  speed = sample(x = 1:100, size = 50, replace = FALSE)
+) )
+```
+
+---
+
+You can **predict** the corresponding **stopping distances** using the function **predict{stats}** as follow:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+predict(model, newdata = new.speeds)
+```
+
+---
+
+###3. Confidence interval
+
+The confidence interval reflects the **uncertainty around the mean predictions**. 
+
+To display the **95% confidence intervals around the mean the predictions**,  
+specify the option **interval = "confidence"** :
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+predict(model, newdata = new.speeds, interval = "confidence")
+```
+
+The output contains the following columns:
+
+    - fit         : The predicted stopping distance values for the new speed values
+    - lwr and upr : The lower and the upper confidence limits for the expected values, respectively. 
+                    By default the function produces the 95% confidence limits.
+
+For example, the **95% confidence interval** associated with a **speed of 19 is (51.83, 62.44)**.
+
+This means that, according to our model,  
+A car with a **speed of 19 mph has, on average, a stopping distance ranging between 51.83 and 62.44 ft**.  
+(**평균적으로 범위가 5.83 ~ 62.44 피트에 이르는** 정지거리를 가짐).
+
+---
+
+###4. Prediction interval
+
+The **prediction interval** gives **uncertainty around a single value**. 
+
+In the same way, as the confidence intervals, the **prediction intervals** can be computed as follow:
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+predict(model, newdata = new.speeds, interval = "prediction")
+```
+
+The **95% prediction intervals** associated with a **speed of 19 is (25.76, 88.51)**.  
+This means that, according to our model, **95% of the cars with a speed of 19 mph have a stopping distance between 25.76 and 88.51**.  
+(**19mph 속도인 차량의 95%가, 25.76 ~ 88.51피트 사이에서, 어떤 정지거리를 가짐**)
+
+#
+    Note that, prediction interval relies strongly on the assumption that the residual errors are normally distributed with a constant variance. So, you should only use such intervals if you believe that the assumption is approximately met for the data at hand.
+
+---
+
+###5. Prediction interval or confidence interval?
+
+A **prediction interval** reflects the **uncertainty around a single value**, while a **confidence interval** reflects the **uncertainty around the mean prediction values**. Thus, a **prediction interval** will be generally **much wider** than a **confidence interval** for the **same value**.
+
+---
+
+Which one should we use?  
+The answer to this question **depends on** the **context** and the **purpose** of the analysis.  
+Generally, we are **interested in specific individual predictions**, so a **prediction interval would be more appropriate**.  
+Using a **confidence interval** when you **should** be using a **prediction interval** will greatly **underestimate** the **uncertainty** in **a given predicted value** (P. Bruce and Bruce 2017).
+
+---
+
+The R code below creates a **scatter plot** with:
+
+  - The **regression line** in **blue**
+  - The **confidence band** in **gray**
+  - The **prediction band** in **red**
+  
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+# 0. Build linear model 
+( model <- lm(dist ~ speed, data = cars) )
+
+# 1. Add predictions 
+( pred.int <- predict(model, interval = "prediction") )
+( mydata <- cbind(cars, pred.int) )
+
+# 2. Regression line + confidence intervals
+library("ggplot2")
+p <- ggplot(mydata, aes(speed, dist)) + geom_point() + stat_smooth(method = lm)
+
+# 3. Add prediction intervals
+p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
+    geom_line(aes(y = upr), color = "red", linetype = "dashed")
+```
+

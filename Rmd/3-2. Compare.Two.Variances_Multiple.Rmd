@@ -1,0 +1,147 @@
+---
+title: "Compare Multiple sample Variances"
+author: "YOSEPH"
+date: "2018년 11월 28일"
+output: html_document
+---
+
+1. Outline
+    * This statistical tests are for comparing the variances of **two or more** samples. 
+    * Equal variances across samples is called **homogeneity of variances**.
+    * Some statistical tests, such as **two independent samples T-test** and **ANOVA test**, assume that variances are **equal** across groups. 
+    * The **Bartlett’s test**, **Levene’s test** or **Fligner-Killeen’s test** can be used to **verify** that assumption.
+<p/>
+
+2. Statistical tests for comparing variances
+    * There are many solutions to test for the equality (homogeneity) of variance across groups, including:
+
+      * **F-test** : Compare the variances of two samples. The data must be normally distributed.
+
+      * **Bartlett’s test** : Compare the variances of k samples, where k can be more than two samples. The data must be normally distributed. The Levene test is an alternative to the Bartlett test that is less sensitive to departures from normality.
+
+      * **Levene’s test** : Compare the variances of k samples, where k can be more than two samples. It’s an alternative to the Bartlett’s test that is less sensitive to departures from normality.
+
+      * **Fligner-Killeen test** : a non-parametric test which is very robust against departures from normality.
+<p/>
+
+3. Statistical hypotheses
+    * For all these tests (Bartlett’s test, Levene’s test or Fligner-Killeen’s test),
+
+        - The null hypothesis : All populations variances are equal.
+        - The alternative hypothesis : At least, two of them differ.
+<p/>
+
+4. check your data into R
+    * Here, we’ll use ToothGrowth and PlantGrowth data sets:
+    
+    * To have an idea of what the data look like, we start by displaying a random sample of 10 rows using the function sample_n()[in dplyr package].
+    
+```{r code1, message=FALSE, warning=FALSE, include=TRUE, echo=TRUE}
+
+# Load the data
+data(ToothGrowth)
+data(PlantGrowth)
+
+```
+
+```{r code2, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+
+set.seed(123)
+
+# Sampling PlantGrowth by size 10
+require(dplyr)
+sample_n(PlantGrowth, 10)
+
+```
+
+```{r code3, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+# PlantGrowth data structure
+str(PlantGrowth)
+```
+
+```{r code4, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+# Sampling ToothGrowth by size 10.
+require(dplyr)
+sample_n(ToothGrowth, 10)
+```
+
+```{r code5, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+# ToothGrowth data structure
+str(ToothGrowth)
+```
+  
+  **Note** that R considers the column “dose” [in ToothGrowth data set] as a numeric vector. We want to convert it as a grouping variable (factor).
+
+```{r code6, message=FALSE, warning=FALSE, include=TRUE, echo=TRUE}
+( ToothGrowth$dose <- as.factor(ToothGrowth$dose) )
+```
+<p/>
+
+5. Compute Bartlett’s test in R
+
+  * **Bartlett’s test** is used for testing homogeneity of variances in k samples, where k can be more than two. It’s adapted for normally distributed data. The Levene test, described in the next section, is a more robust alternative to the Bartlett test when the distributions of the data are non-normal.
+  
+  * The R function `bartlett.test()` can be used to compute **Barlett’s test**. The simplified format is as follow:
+
+    * `bartlett.test(formula, data)`
+  
+        - formula: a formula of the form `values ~ groups`
+        - data: a matrix or data frame
+<p/>
+
+  * The function returns a list containing the following component:
+    
+    - statistic: Bartlett’s K-squared test statistic
+    - parameter: the degrees of freedom of the approximate chi-squared                         distribution of the test statistic.
+    - p.value: the p-value of the test
+<p/>
+
+  * To perform the test, we’ll use the PlantGrowth data set, which contains the weight of plants obtained under 3 treatment groups.
+  
+    - **Bartlett’s test with one independent variable**:
+    
+```{r code7, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+res <- bartlett.test(weight ~ group, data = PlantGrowth)
+res
+```
+  * From the output, it can be seen that the p-value of 0.2370968 is not less than the significance level of 0.05. This means that there is no evidence to suggest that the variance in plant growth is statistically significantly different for the three treatment groups.   
+      
+    - **Bartlett’s test with multiple independent variables** : 
+      the interaction() [in base package] function must be used to collapse multiple factors into a single variable containing all combinations of the factors.
+      
+```{r code8, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+bartlett.test(len ~ interaction(supp, dose), data=ToothGrowth)
+```
+<p/>
+
+6. Compute Levene’s test in R
+  * Levene’s test is an alternative to Bartlett’s test when the data is not normally distributed.
+  
+  * The function leveneTest() [in car package] can be used.
+  
+```{r code9, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+require(car)
+
+# Levene's test with one independent variable
+leveneTest(weight ~ group, data = PlantGrowth)
+```
+
+```{r code10, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+require(car)
+
+# Levene's test with multiple independent variables
+leveneTest(len ~ supp*dose, data = ToothGrowth)
+```
+<p/>
+
+7. Compute Fligner-Killeen test in R
+    * The Fligner-Killeen test is one of the many tests for homogeneity of variances which is most robust against departures from normality.
+  
+    * The R function `fligner.test()` [in stats package] can be used to compute the test:
+  
+```{r code11, message=TRUE, warning=FALSE, include=TRUE, echo=TRUE}
+fligner.test(weight ~ group, data = PlantGrowth)
+```
+<p/>  
+  
+

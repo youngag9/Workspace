@@ -1,0 +1,126 @@
+---
+title: 'EFA : Explanatory Factor Analysis'
+output: html_document
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+data("Harman74.cor")
+str(Harman74.cor)
+
+library(DT)
+datatable(Harman74.cor$cov)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+data("ability.cov")
+str(ability.cov)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+options(digits = 3)
+
+covariances <- ability.cov$cov
+correlations <- cov2cor(covariances)
+
+library(DT)
+datatable(correlations)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(psych)
+fa.parallel(
+  x = correlations,
+  n.obs = 112,
+  fa = 'both',
+  n.iter = 100,
+  show.legend = TRUE,
+  main = 'Scree plots with parallel anlysis' )
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fa <- fa(correlations, nfactors = 2, rotate = 'none', fm = 'pa' ) )
+
+class(fa)
+mode(fa)
+names(fa)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fa.varimax <- fa(correlations, nfactors = 2, rotate = 'varimax', fm = 'pa' ) )
+
+class(fa.varimax)
+mode(fa.varimax)
+names(fa.varimax)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fa.promax <- fa(correlations, nfactors = 2, rotate = 'promax', fm = 'pa' ) )
+
+class(fa.promax)
+mode(fa.promax)
+names(fa.promax)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+fsm <- function(oblique) {
+  if( class(oblique)[2] == 'fa' & is.null(oblique$Phi) ) {
+    warning("Object doesn't look like oblique EFA")
+  } else {
+    P <- unclass(oblique$loading)
+    F <- P %*% oblique$Phi
+
+    colnames(F) <- c('PA1','PA2')
+    
+    return(F)
+  }
+}
+
+fsm(fa.promax)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+library(psych)
+factor.plot(fa.promax, labels = rownames(fa.promax$loadings))
+factor.plot(fa.promax, simple = FALSE)
+factor.plot(fa.promax, simple = TRUE)
+```
+
+---
+
+```{r eval=TRUE, include=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+
+( fa.promax <- fa(correlations, nfactors = 2, rotate = 'promax', fm = 'pa', scores = TRUE ) )
+
+class(fa.promax)
+mode(fa.promax)
+names(fa.promax)
+
+fa.promax$weights
+```
+
+---
